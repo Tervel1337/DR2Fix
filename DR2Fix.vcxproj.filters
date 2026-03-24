@@ -92,5 +92,8 @@
     <ClInclude Include="Includes\safetyhook\Zydis.h">
       <Filter>Includes</Filter>
     </ClInclude>
+    <ClInclude Include="DR2Fix\Structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

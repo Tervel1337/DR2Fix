@@ -18,4 +18,13 @@ void General::Install() {
         auto Pattern = Utils::FindPattern("6A ? B9 ? ? ? ? E8 ? ? ? ? F3 0F 10 05"); // fix for the blur setting not applying on boot in DR2
         Nop(Pattern.get_first(), 12);
     }
+    else {
+        auto Pattern = Utils::FindPattern("8B 70 ? 8B 0D ? ? ? ? 56");
+        static const uintptr_t SkipAddr = (uintptr_t)Pattern.get_first(0x166);
+
+        static auto FixAnimCrash = safetyhook::create_mid(Pattern.get_first(), [](SafetyHookContext& ctx) {
+            if (!ctx.eax) ctx.eip = SkipAddr;
+            });
+        // the console version does this, this system was added in OTR and the PC version uses an earlier codebase I guess
+    }
 }

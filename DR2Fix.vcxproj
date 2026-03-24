@@ -214,6 +214,7 @@ xcopy /Y /E /I "$(ProjectDir)Shaders\*" "D:\Steam Games\steamapps\common\Dead Ri
     <ClInclude Include="DR2Fix\Patches.h" />
     <ClInclude Include="DR2Fix\Shader.h" />
     <ClInclude Include="DR2Fix\stdafx.h" />
+    <ClInclude Include="DR2Fix\Structs.h" />
     <ClInclude Include="DR2Fix\Timing.h" />
     <ClInclude Include="DR2Fix\Ultrawide.h" />
     <ClInclude Include="DR2Fix\Utils.h" />

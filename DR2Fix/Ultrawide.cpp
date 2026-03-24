@@ -15,12 +15,8 @@ float __fastcall Ultrawide::GetUIAspectRatio(int* thisptr, void* Dummy) {
     return AspectRatio > AR16x9 ? AR16x9 : AspectRatio;
 }
 
-char __stdcall Ultrawide::FixupRes(int* Width, int* Height, tagRECT* DestRect) {
-    static float AspectRatios[] = { 1.33f, AR16x9, 1.6f, 1.25f, 2.37f, 2.38f, AR32x9 };
-
-    for (int i = 0; i < ARRAY_SIZE(AspectRatios); ++i) {
-        if (fabs((*Width / (float)(*Height)) - AspectRatios[i]) < 0.01f) return 0;
-    }
+bool __stdcall Ultrawide::FixupRes(int* Width, int* Height, tagRECT* DestRect) {
+    if ((float)*Width / *Height >= AR16x9) return false;
 
     int NewWidth = (*Width * 9 > *Height * 16) ? (*Height * 16) / 9 : *Width;
     int NewHeight = (*Width * 9 > *Height * 16) ? *Height : (*Width * 9) / 16;
@@ -33,7 +29,7 @@ char __stdcall Ultrawide::FixupRes(int* Width, int* Height, tagRECT* DestRect) {
     *Width = NewWidth;
     *Height = NewHeight;
 
-    return 1;
+    return true;
 }
 
 void Ultrawide::Install() {
