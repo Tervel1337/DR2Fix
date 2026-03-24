@@ -17,6 +17,9 @@ This project aims to fix the PC-exclusive visual issues in Dead Rising 2 and Off
 - **Ultrawide support:** As an additional feature, this projects adds 21:9 and 32:9 support to the game - it will no longer reject those aspect ratios, the 3D aspect ratio has been corrected, the 3D to 2D projection has been corrected to fix healthbars and object prompts, the shadow map coverage has been extended (although you might still sometimes see shadows being weird in ultrawide but the problem is significantly less severe) and the resolution of the shadow maps will increase based on your aspect ratio and the HUD itself is limited to a 16:9 scale/position which makes it retain the correct and size and be properly centered.
 - **Fixed font scaling**: The game will now have a correct font scale at above 1200p - if you play at a big resolution such as 4K the font will no longer be tiny. This fix also accounts for the Asian versions of the game so the font scale will be corrected with the needed overrides/additional scaling for them. The positioning itself still needs fixing because it will be very slightly off vertically (not really noticeable). 
 
+### Misc:
+- **OTR co-op anim crash fix:** Backported a code difference from console to PC to prevent a rare animation load crash.
+
 ### Recommendations:
 - If you're playing DR2, the UI on PC has terrible compression artifacts, the [HD Frontend Textures](https://www.nexusmods.com/deadrising2/mods/22) mod fixes that.
 - If you have an NVIDIA GPU and you're getting weird seams in the character models when using MSAA, it's a driver bug which you can fully avoid with [DXVK](https://github.com/doitsujin/dxvk).
