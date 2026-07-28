@@ -3,6 +3,8 @@
 #include "General.h"
 #include "Utils.h"
 
+static constexpr int ShadowMapRes = 4096;
+
 IDirect3DDevice9* GPU::pDevice;
 int* GPU::GraphicsInst;
 int* GPU::DrawInst;
@@ -68,4 +70,10 @@ void GPU::Install() {
     Pattern = Utils::FindPattern("A3 ? ? ? ? A3 ? ? ? ? C3 33 C0");
     GPU::GraphicsInst = *(int**)(Pattern.get_first(0x01));
     GPU::DrawInst = *(int**)(Pattern.get_first(0x06));
+
+    Pattern = Utils::FindPattern("83 BE ? ? ? ? ? C7 86 ? ? ? ? ? ? ? ? C6 86");
+    static auto ShadowRes = safetyhook::create_mid(Pattern.get_first(0x11), [](SafetyHookContext& ctx) {
+        const short WidthOffset = General::IsOTR ? 0xD0 : 0xBC;
+        *(int*)(ctx.esi + WidthOffset) = ShadowMapRes;
+       });
 }

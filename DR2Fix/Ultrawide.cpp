@@ -6,7 +6,6 @@
 float Ultrawide::AspectRatio;
 const float Ultrawide::AR16x9 = 1.78f;
 const float Ultrawide::AR32x9 = 3.55f;
-int GPU::ShadowMapRes = 1024;
 
 float __fastcall Ultrawide::GetUIAspectRatio(int* thisptr, void* Dummy) {
     GPU::ResX = *(int*)(*GPU::GraphicsInst + 0xC);
@@ -44,15 +43,4 @@ void Ultrawide::Install() {
         if (AspectRatio > AR16x9) ctx.xmm0.f32[0] = (9.0f / AR16x9) * (AspectRatio - AR16x9);
         // this is 100% not correct but it works for increasing the coverage in a way that looks fine at least
         });
-
-    Pattern = Utils::FindPattern("83 BE ? ? ? ? ? C7 86 ? ? ? ? ? ? ? ? C6 86");
-    static auto ShadowRes = safetyhook::create_mid(Pattern.get_first(0x11), [](SafetyHookContext& ctx) {
-        const short WidthOffset = General::IsOTR ? 0xD0 : 0xBC;
-        if (AspectRatio > AR16x9) {
-            GPU::ShadowMapRes = AspectRatio < AR32x9 ? 2048 : 4096;
-            *(int*)(ctx.esi + WidthOffset) = AspectRatio < AR32x9 ? 2048 : 4096;
-        }
-        else GPU::ShadowMapRes = *(int*)(ctx.esi + WidthOffset);
-       });
-
 }

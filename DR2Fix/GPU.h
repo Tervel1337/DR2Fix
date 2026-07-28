@@ -11,7 +11,6 @@ public:
     static int* DrawInst;
     static int ResX;
     static int ResY;
-    static int ShadowMapRes;
 
     static void GetGPUVendor();
     static void FixRenderStates(safetyhook::Context32& ctx);
