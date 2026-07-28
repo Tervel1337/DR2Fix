@@ -20,11 +20,12 @@
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
-#include <expected>
 #include <functional>
 #else
 import std.compat;
 #endif
+
+#include "expected.hpp"
 
 
 //
@@ -162,11 +163,11 @@ struct VmBasicInfo {
     bool is_free;
 };
 
-std::expected<uint8_t*, OsError> SAFETYHOOK_API vm_allocate(uint8_t* address, size_t size, VmAccess access);
+nonstd::expected<uint8_t*, OsError> SAFETYHOOK_API vm_allocate(uint8_t* address, size_t size, VmAccess access);
 void SAFETYHOOK_API vm_free(uint8_t* address);
-std::expected<uint32_t, OsError> SAFETYHOOK_API vm_protect(uint8_t* address, size_t size, VmAccess access);
-std::expected<uint32_t, OsError> SAFETYHOOK_API vm_protect(uint8_t* address, size_t size, uint32_t access);
-std::expected<VmBasicInfo, OsError> SAFETYHOOK_API vm_query(uint8_t* address);
+nonstd::expected<uint32_t, OsError> SAFETYHOOK_API vm_protect(uint8_t* address, size_t size, VmAccess access);
+nonstd::expected<uint32_t, OsError> SAFETYHOOK_API vm_protect(uint8_t* address, size_t size, uint32_t access);
+nonstd::expected<VmBasicInfo, OsError> SAFETYHOOK_API vm_query(uint8_t* address);
 bool SAFETYHOOK_API vm_is_readable(uint8_t* address, size_t size);
 bool SAFETYHOOK_API vm_is_writable(uint8_t* address, size_t size);
 bool SAFETYHOOK_API vm_is_executable(uint8_t* address);
@@ -220,7 +221,6 @@ void SAFETYHOOK_API fix_ip(ThreadContext ctx, uint8_t* old_ip, uint8_t* new_ip);
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
-#include <expected>
 #include <memory>
 #include <mutex>
 #include <utility>
@@ -228,6 +228,8 @@ void SAFETYHOOK_API fix_ip(ThreadContext ctx, uint8_t* old_ip, uint8_t* new_ip);
 #else
 import std.compat;
 #endif
+
+#include "expected.hpp"
 
 
 //
@@ -246,13 +248,14 @@ import std.compat;
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
-#include <expected>
 #include <memory>
 #include <mutex>
 #include <vector>
 #else
 import std.compat;
 #endif
+
+#include "expected.hpp"
 
 
 namespace safetyhook {
@@ -325,14 +328,14 @@ public:
     /// @brief Allocates memory.
     /// @param size The size of the allocation.
     /// @return The Allocation or an Allocator::Error if the allocation failed.
-    [[nodiscard]] std::expected<Allocation, Error> allocate(size_t size);
+    [[nodiscard]] nonstd::expected<Allocation, Error> allocate(size_t size);
 
     /// @brief Allocates memory near a target address.
     /// @param desired_addresses The target address.
     /// @param size The size of the allocation.
     /// @param max_distance The maximum distance from the target address.
     /// @return The Allocation or an Allocator::Error if the allocation failed.
-    [[nodiscard]] std::expected<Allocation, Error> allocate_near(
+    [[nodiscard]] nonstd::expected<Allocation, Error> allocate_near(
         const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance = 0x7FFF'FFFF);
 
 protected:
@@ -360,12 +363,12 @@ private:
 
     Allocator() = default;
 
-    [[nodiscard]] std::expected<Allocation, Error> internal_allocate_near(
+    [[nodiscard]] nonstd::expected<Allocation, Error> internal_allocate_near(
         const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance = 0x7FFF'FFFF);
     void internal_free(uint8_t* address, size_t size);
 
     static void combine_adjacent_freenodes(Memory& memory);
-    [[nodiscard]] static std::expected<uint8_t*, Error> allocate_nearby_memory(
+    [[nodiscard]] static nonstd::expected<uint8_t*, Error> allocate_nearby_memory(
         const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance);
     [[nodiscard]] static bool in_range(
         uint8_t* address, const std::vector<uint8_t*>& desired_addresses, size_t max_distance);
@@ -550,7 +553,7 @@ public:
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
-    [[nodiscard]] static std::expected<InlineHook, Error> create(
+    [[nodiscard]] static nonstd::expected<InlineHook, Error> create(
         void* target, void* destination, Flags flags = Default);
 
     /// @brief Create an inline hook.
@@ -561,7 +564,7 @@ public:
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
     template <typename T, typename U>
-    [[nodiscard]] static std::expected<InlineHook, Error> create(T target, U destination, Flags flags = Default) {
+    [[nodiscard]] static nonstd::expected<InlineHook, Error> create(T target, U destination, Flags flags = Default) {
         return create(reinterpret_cast<void*>(target), reinterpret_cast<void*>(destination), flags);
     }
 
@@ -572,7 +575,7 @@ public:
     /// @param flags The flags to use.
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
-    [[nodiscard]] static std::expected<InlineHook, Error> create(
+    [[nodiscard]] static nonstd::expected<InlineHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, void* target, void* destination, Flags flags = Default);
 
     /// @brief Create an inline hook with a given Allocator.
@@ -583,7 +586,7 @@ public:
     /// @return The InlineHook or an InlineHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_inline).
     template <typename T, typename U>
-    [[nodiscard]] static std::expected<InlineHook, Error> create(
+    [[nodiscard]] static nonstd::expected<InlineHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, T target, U destination, Flags flags = Default) {
         return create(allocator, reinterpret_cast<void*>(target), reinterpret_cast<void*>(destination), flags);
     }
@@ -749,10 +752,10 @@ public:
     }
 
     /// @brief Enable the hook.
-    [[nodiscard]] std::expected<void, Error> enable();
+    [[nodiscard]] nonstd::expected<void, Error> enable();
 
     /// @brief Disable the hook.
-    [[nodiscard]] std::expected<void, Error> disable();
+    [[nodiscard]] nonstd::expected<void, Error> disable();
 
     /// @brief Check if the hook is enabled.
     [[nodiscard]] bool enabled() const { return m_enabled; }
@@ -775,12 +778,12 @@ private:
     bool m_enabled{};
     Type m_type{Type::Unset};
 
-    std::expected<void, Error> setup(
+    nonstd::expected<void, Error> setup(
         const std::shared_ptr<Allocator>& allocator, uint8_t* target, uint8_t* destination);
-    std::expected<void, Error> e9_hook(const std::shared_ptr<Allocator>& allocator);
+    nonstd::expected<void, Error> e9_hook(const std::shared_ptr<Allocator>& allocator);
 
 #if SAFETYHOOK_ARCH_X86_64
-    std::expected<void, Error> ff_hook(const std::shared_ptr<Allocator>& allocator);
+    nonstd::expected<void, Error> ff_hook(const std::shared_ptr<Allocator>& allocator);
 #endif
 
     void destroy();
@@ -930,7 +933,7 @@ public:
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
-    [[nodiscard]] static std::expected<MidHook, Error> create(
+    [[nodiscard]] static nonstd::expected<MidHook, Error> create(
         void* target, MidHookFn destination_fn, Flags flags = Default);
 
     /// @brief Creates a new MidHook object.
@@ -941,7 +944,7 @@ public:
     /// @note This will use the default global Allocator.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
     template <typename T>
-    [[nodiscard]] static std::expected<MidHook, Error> create(
+    [[nodiscard]] static nonstd::expected<MidHook, Error> create(
         T target, MidHookFn destination_fn, Flags flags = Default) {
         return create(reinterpret_cast<void*>(target), destination_fn, flags);
     }
@@ -953,7 +956,7 @@ public:
     /// @param flags The flags to use.
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
-    [[nodiscard]] static std::expected<MidHook, Error> create(
+    [[nodiscard]] static nonstd::expected<MidHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, void* target, MidHookFn destination_fn, Flags flags = Default);
 
     /// @brief Creates a new MidHook object with a given Allocator.
@@ -965,7 +968,7 @@ public:
     /// @return The MidHook object or a MidHook::Error if an error occurred.
     /// @note If you don't care about error handling, use the easy API (safetyhook::create_mid).
     template <typename T>
-    [[nodiscard]] static std::expected<MidHook, Error> create(
+    [[nodiscard]] static nonstd::expected<MidHook, Error> create(
         const std::shared_ptr<Allocator>& allocator, T target, MidHookFn destination_fn, Flags flags = Default) {
         return create(allocator, reinterpret_cast<void*>(target), destination_fn, flags);
     }
@@ -1003,10 +1006,10 @@ public:
     explicit operator bool() const { return static_cast<bool>(m_stub); }
 
     /// @brief Enable the hook.
-    [[nodiscard]] std::expected<void, Error> enable();
+    [[nodiscard]] nonstd::expected<void, Error> enable();
 
     /// @brief Disable the hook.
-    [[nodiscard]] std::expected<void, Error> disable();
+    [[nodiscard]] nonstd::expected<void, Error> disable();
 
     /// @brief Check if the hook is enabled.
     [[nodiscard]] bool enabled() const { return m_hook.enabled(); }
@@ -1017,7 +1020,7 @@ private:
     Allocation m_stub{};
     MidHookFn m_destination{};
 
-    std::expected<void, Error> setup(
+    nonstd::expected<void, Error> setup(
         const std::shared_ptr<Allocator>& allocator, uint8_t* target, MidHookFn destination);
 };
 } // namespace safetyhook
@@ -1037,11 +1040,12 @@ private:
 
 #ifndef SAFETYHOOK_USE_CXXMODULES
 #include <cstdint>
-#include <expected>
 #include <unordered_map>
 #else
 import std.compat;
 #endif
+
+#include "expected.hpp"
 
 
 namespace safetyhook {
@@ -1149,7 +1153,7 @@ public:
     /// @brief Creates a new VmtHook object. Will clone the VMT of the given object and replace it.
     /// @param object The object to hook.
     /// @return The VmtHook object or a VmtHook::Error if an error occurred.
-    [[nodiscard]] static std::expected<VmtHook, Error> create(void* object);
+    [[nodiscard]] static nonstd::expected<VmtHook, Error> create(void* object);
 
     VmtHook() = default;
     VmtHook(const VmtHook&) = delete;
@@ -1173,7 +1177,7 @@ public:
     /// @brief Hooks a method in the VMT.
     /// @param index The index of the method to hook.
     /// @param new_function The new function to use.
-    template <typename T> [[nodiscard]] std::expected<VmHook, Error> hook_method(size_t index, T new_function) {
+    template <typename T> [[nodiscard]] nonstd::expected<VmHook, Error> hook_method(size_t index, T new_function) {
         VmHook hook{};
 
         ++index; // Skip RTTI pointer.
