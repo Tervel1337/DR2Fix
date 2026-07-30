@@ -17,6 +17,9 @@ void General::Install() {
     if (!IsOTR) {
         auto Pattern = Utils::FindPattern("6A ? B9 ? ? ? ? E8 ? ? ? ? F3 0F 10 05"); // fix for the blur setting not applying on boot in DR2
         Nop(Pattern.get_first(), 12);
+
+        Pattern = Utils::FindPattern("83 C4 08 8B F0 80 ? ? ? ? 00 00 74 18 6A 07"); // skip startup logos
+        Nop(Pattern.get_first(12), 2);
     }
     else {
         auto Pattern = Utils::FindPattern("8B 70 ? 8B 0D ? ? ? ? 56");
