@@ -1,3 +1,4 @@
+#include "Controller.h"
 #include "General.h"
 #include "GPU.h"
 #include "Timing.h"
@@ -13,4 +14,5 @@ void Patches::Install() {
     Font::Install();
     Ultrawide::Install();
     Shader::Install();
+    Controller::Install();
 }

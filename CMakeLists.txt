@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(DR2Fix LANGUAGES C CXX)
 
 add_library(DR2Fix SHARED
+	"DR2Fix/Controller.cpp" "DR2Fix/Controller.h"
 	"DR2Fix/DllMain.cpp"
 	"DR2Fix/Font.cpp" "DR2Fix/Font.h"
 	"DR2Fix/General.cpp" "DR2Fix/General.h"
@@ -27,3 +28,29 @@ target_include_directories(DR2Fix PRIVATE
 )
 
 set_target_properties(DR2Fix PROPERTIES CXX_STANDARD 23)
+
+# For the improved controller support, build and link a stripped-down SDL3.
+
+# Produce static library only.
+set(SDL_STATIC ON)
+set(SDL_SHARED OFF)
+
+# Disable unneeded subsystems; we just want controller functionality.
+set(SDL_AUDIO OFF)
+set(SDL_VIDEO OFF)
+set(SDL_GPU OFF)
+set(SDL_RENDER OFF)
+set(SDL_CAMERA OFF)
+set(SDL_POWER OFF)
+set(SDL_SENSOR OFF)
+set(SDL_DIALOG OFF)
+set(SDL_TRAY OFF)
+add_subdirectory("Includes/SDL" EXCLUDE_FROM_ALL)
+
+# Remove bloat.
+target_compile_definitions(SDL3-static PRIVATE SDL_LEAN_AND_MEAN)
+
+# Trick SDL into disabling its dynamic API, to reduce bloat further.
+target_compile_definitions(SDL3-static PRIVATE __INTELLISENSE__)
+
+target_link_libraries(DR2Fix PRIVATE SDL3::SDL3-static)
