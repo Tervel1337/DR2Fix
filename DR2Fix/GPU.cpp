@@ -10,6 +10,7 @@ static int* DrawInst;
 static short D3DDeviceOffset = 0x198;
 static D3DRENDERSTATETYPE AlphaRS;
 static DWORD AlphaRSValue;
+static void (*InitShaders)();
 
 int* GPU::GraphicsInst;
 int GPU::ResX;
@@ -34,7 +35,7 @@ static void GetGPUVendor() {
             AlphaRSValue = 0x434F5441; // A2M1
         }
     }
-    ((void(*)())Shader::InitShaders)();
+    InitShaders();
 }
 
 static void FixRenderStates(safetyhook::Context32& ctx) {
@@ -63,7 +64,7 @@ static void FixRenderStates(safetyhook::Context32& ctx) {
 
 void GPU::Install() {
     auto Pattern = Utils::FindPattern("E8 ? ? ? ? E8 ? ? ? ? 8B 3D ? ? ? ? 8B CF");
-    InterceptCall(Pattern.get_first(0x5), Shader::InitShaders, &GetGPUVendor);
+    InterceptCall(Pattern.get_first(0x5), InitShaders, &GetGPUVendor);
 
     Pattern = Utils::FindPattern("80 3D ? ? ? ? ? A1 ? ? ? ? 74");
     static SafetyHookMid RSFix = safetyhook::create_mid(Pattern.get_first(), &FixRenderStates);
