@@ -16,6 +16,9 @@ This project aims to fix the PC-exclusive visual issues in Dead Rising 2 and Off
 ### QoL:
 - **Ultrawide support:** As an additional feature, this projects adds 21:9 and 32:9 support to the game - it will no longer reject those aspect ratios, the 3D aspect ratio has been corrected, the 3D to 2D projection has been corrected to fix healthbars and object prompts, the shadow map coverage has been extended (although you might still sometimes see shadows being weird in ultrawide but the problem is significantly less severe) and the resolution of the shadow maps will increase based on your aspect ratio and the HUD itself is limited to a 16:9 scale/position which makes it retain the correct and size and be properly centered.
 - **Fixed font scaling**: The game will now have a correct font scale at above 1200p - if you play at a big resolution such as 4K the font will no longer be tiny. This fix also accounts for the Asian versions of the game so the font scale will be corrected with the needed overrides/additional scaling for them. The positioning itself still needs fixing because it will be very slightly off vertically (not really noticeable). 
+- **4K shadows:** The shadow map has had its resolution increased to 4096, reducing pixelation.
+- **Skipped logos:** The various splash screens that appear on start-up have been eliminated - it is now far quicker to start the game.
+- **SDL controller support:** Controller compatibility has been greatly improved - now, non-XInput controllers (such as the DualShock 4) work without any additional setup.
 
 ### Misc:
 - **OTR co-op anim crash fix:** Backported a code difference from console to PC to prevent a rare animation load crash.
