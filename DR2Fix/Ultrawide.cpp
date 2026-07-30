@@ -35,7 +35,7 @@ void Ultrawide::Install() {
 
     Pattern = Utils::FindPattern("? ? ? ? ? ? ? ? DF E0 F6 C4 ? 75 ? ? ? ? ? ? DF E0 F6 C4 ? 7B ? 80 7C 24");
     static auto Fix3DTo2DProj = safetyhook::create_mid(Pattern.get_first(), [](SafetyHookContext& ctx) {
-        if (AspectRatio > AR16x9) *(float*)ctx.esi *= AspectRatio * 0.5625f;
+        if (AspectRatio > AR16x9) *(float*)ctx.esi *= AspectRatio * (9.0f / 16.0f);
         });
 
     Pattern = Utils::FindPattern("F3 0F 10 4C 24 ? F3 0F 10 54 24 ? F3 0F 10 2D");
