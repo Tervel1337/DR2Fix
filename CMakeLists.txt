@@ -14,16 +14,16 @@ add_library(DR2Fix SHARED
 	"DR2Fix/Timing.cpp" "DR2Fix/Timing.h"
 	"DR2Fix/Ultrawide.cpp" "DR2Fix/Ultrawide.h"
 	"DR2Fix/Utils.h"
-	"includes/Hooking.Patterns/Hooking.Patterns.cpp" "includes/Hooking.Patterns/Hooking.Patterns.h"
-	"includes/MemoryMgr/MemoryMgr.h"
-	"includes/safetyhook/safetyhook.cpp" "includes/safetyhook/safetyhook.hpp"
-	"includes/safetyhook/Zydis.c" "includes/safetyhook/Zydis.h"
+	"Includes/Hooking.Patterns/Hooking.Patterns.cpp" "Includes/Hooking.Patterns/Hooking.Patterns.h"
+	"Includes/MemoryMgr/MemoryMgr.h"
+	"Includes/safetyhook/safetyhook.cpp" "Includes/safetyhook/safetyhook.hpp"
+	"Includes/safetyhook/Zydis.c" "Includes/safetyhook/Zydis.h"
 )
 
 target_include_directories(DR2Fix PRIVATE
-	"includes/Hooking.Patterns"
-	"includes/MemoryMgr"
-	"includes/safetyhook"
+	"Includes/Hooking.Patterns"
+	"Includes/MemoryMgr"
+	"Includes/safetyhook"
 )
 
 set_target_properties(DR2Fix PROPERTIES CXX_STANDARD 23)
