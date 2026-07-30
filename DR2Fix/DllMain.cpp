@@ -1,4 +1,5 @@
 #include "Patches.h"
+#include "Utils.h"
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
 	switch (dwReason) {

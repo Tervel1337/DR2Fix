@@ -7,9 +7,8 @@
 #define ARRAY_SIZE(v) (sizeof(v) / sizeof(v[0]))
 using namespace Memory::VP;
 
-class Utils {
-public:
-    static hook::pattern FindPattern(std::string_view PatternStr) {
+namespace Utils {
+    inline hook::pattern FindPattern(std::string_view PatternStr) {
         hook::pattern Pattern(PatternStr);
         if (Pattern.empty()) {
             char Buffer[512];

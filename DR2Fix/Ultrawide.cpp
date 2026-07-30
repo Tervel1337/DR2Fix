@@ -3,18 +3,18 @@
 #include "General.h"
 #include "Utils.h"
 
-float Ultrawide::AspectRatio;
-const float Ultrawide::AR16x9 = 1.78f;
-const float Ultrawide::AR32x9 = 3.55f;
+static float AspectRatio;
+static const float AR16x9 = 1.78f;
+static const float AR32x9 = 3.55f;
 
-float __fastcall Ultrawide::GetUIAspectRatio(int* thisptr, void* Dummy) {
+static float __fastcall GetUIAspectRatio(int* thisptr, void* Dummy) {
     GPU::ResX = *(int*)(*GPU::GraphicsInst + 0xC);
     GPU::ResY = *(int*)(*GPU::GraphicsInst + 0x10);
     AspectRatio = (float)GPU::ResX / (float)GPU::ResY;
     return AspectRatio > AR16x9 ? AR16x9 : AspectRatio;
 }
 
-bool __stdcall Ultrawide::FixupRes(int* Width, int* Height, tagRECT* DestRect) {
+static bool __stdcall FixupRes(int* Width, int* Height, tagRECT* DestRect) {
     return (float)*Width / *Height < AR16x9;
 }
 

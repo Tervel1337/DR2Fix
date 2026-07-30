@@ -2,13 +2,14 @@
 #include "GPU.h"
 #include "General.h"
 #include "Structs.h"
+#include "Utils.h"
 
-const unsigned int Font::ArialBlk46Hash = 0xD401C410;
-const unsigned int Font::ArialBlk18Hash = 0xD401C3FB;
-int* Font::FontRes;
-int* Font::FontData;
-uintptr_t Font::WatchFace;
-bool Font::IsAsianLang(int* This) {
+static const unsigned int ArialBlk46Hash = 0xD401C410;
+static const unsigned int ArialBlk18Hash = 0xD401C3FB;
+static int* FontRes;
+static int* FontData;
+static uintptr_t WatchFace;
+static bool IsAsianLang(int* This) {
     if (General::IsOTR) {
         return *(bool*)This;
     }
@@ -18,7 +19,7 @@ bool Font::IsAsianLang(int* This) {
     }
 }
 
-void Font::FixWatchFont(float Scale) {
+static void FixWatchFont(float Scale) {
     if (WatchFace) { // the game never destroys the watch face but it first is created when you open it
         cFEText* Date = *(cFEText**)(WatchFace + 0x0C);
         cFEText* Time = *(cFEText**)(WatchFace + 0x90);
@@ -29,7 +30,7 @@ void Font::FixWatchFont(float Scale) {
     }
 }
 
-float __fastcall Font::FontScaleOverride(int* This, unsigned int FontHash, void* Dummy) {
+static float __fastcall FontScaleOverride(int* This, unsigned int FontHash, void* Dummy) {
     float Scale = (GPU::ResY) / float(*FontRes);
     if (!General::IsOTR) FixWatchFont(Scale);
     if (IsAsianLang(This)) {

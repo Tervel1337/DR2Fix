@@ -5,16 +5,17 @@
 
 static constexpr int ShadowMapRes = 4096;
 
-IDirect3DDevice9* GPU::pDevice;
+static IDirect3DDevice9* pDevice;
+static int* DrawInst;
+static short D3DDeviceOffset = 0x198;
+static D3DRENDERSTATETYPE AlphaRS;
+static DWORD AlphaRSValue;
+
 int* GPU::GraphicsInst;
-int* GPU::DrawInst;
 int GPU::ResX;
 int GPU::ResY;
-short GPU::D3DDeviceOffset = 0x198;
-D3DRENDERSTATETYPE GPU::AlphaRS;
-DWORD GPU::AlphaRSValue;
 
-void GPU::GetGPUVendor() {
+static void GetGPUVendor() {
     if (General::IsOTR) D3DDeviceOffset += 0x100;
 
     pDevice = *(IDirect3DDevice9**)(void*)(*GPU::GraphicsInst + D3DDeviceOffset);
@@ -36,22 +37,22 @@ void GPU::GetGPUVendor() {
     ((void(*)())Shader::InitShaders)();
 }
 
-void GPU::FixRenderStates(safetyhook::Context32& ctx) {
+static void FixRenderStates(safetyhook::Context32& ctx) {
     if (!pDevice) return;
 
     DWORD AlphaRef, AlphaTest;
     pDevice->GetRenderState(D3DRS_ALPHAREF, &AlphaRef);
     pDevice->GetRenderState(D3DRS_ALPHATESTENABLE, &AlphaTest);
-    if (AlphaTest == 1 && AlphaRef != 0) pDevice->SetRenderState(GPU::AlphaRS, GPU::AlphaRSValue);
-    else pDevice->SetRenderState(GPU::AlphaRS, 0); // this needs manual resetting because it's a state the game doesn't set
+    if (AlphaTest == 1 && AlphaRef != 0) pDevice->SetRenderState(AlphaRS, AlphaRSValue);
+    else pDevice->SetRenderState(AlphaRS, 0); // this needs manual resetting because it's a state the game doesn't set
 
     LPDIRECT3DSURFACE9 pRenderTarget = nullptr;
     pDevice->GetRenderTarget(0, &pRenderTarget);
     if (pRenderTarget) {
         D3DSURFACE_DESC Desc;
         pRenderTarget->GetDesc(&Desc);
-        /*unsigned int ShaderHash = *(unsigned int*)(*GPU::DrawInst + Shader::ShaderHashOffset);
-        if (Shader::IsSkinnedShader(ShaderHash) && Desc.Width == GPU::ResX && Desc.Height == GPU::ResY) {
+        /*unsigned int ShaderHash = *(unsigned int*)(*DrawInst + Shader::ShaderHashOffset);
+        if (Shader::IsSkinnedShader(ShaderHash) && Desc.Width == ResX && Desc.Height == ResY) {
             pDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
         }
         // no need to reset cullmode because the game will overwrite it anyhow
@@ -68,8 +69,8 @@ void GPU::Install() {
     static SafetyHookMid RSFix = safetyhook::create_mid(Pattern.get_first(), &FixRenderStates);
 
     Pattern = Utils::FindPattern("A3 ? ? ? ? A3 ? ? ? ? C3 33 C0");
-    GPU::GraphicsInst = *(int**)(Pattern.get_first(0x01));
-    GPU::DrawInst = *(int**)(Pattern.get_first(0x06));
+    GraphicsInst = *(int**)(Pattern.get_first(0x01));
+    DrawInst = *(int**)(Pattern.get_first(0x06));
 
     Pattern = Utils::FindPattern("83 BE ? ? ? ? ? C7 86 ? ? ? ? ? ? ? ? C6 86");
     static auto ShadowRes = safetyhook::create_mid(Pattern.get_first(0x11), [](SafetyHookContext& ctx) {

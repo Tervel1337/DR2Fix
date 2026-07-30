@@ -1,11 +1,12 @@
 #include "Timing.h"
 #include "General.h"
+#include "Utils.h"
 
-LARGE_INTEGER* Timing::Freq;
-float Timing::Frametime;
-const float Timing::TargetFT = 0.0333333f;
+static LARGE_INTEGER* Freq;
+static float Frametime;
+static const float TargetFT = 0.0333333f;
 
-double __cdecl Timing::GetTimeForTick(_LARGE_INTEGER Tick) {
+static double __cdecl GetTimeForTick(_LARGE_INTEGER Tick) {
     double Result = (double)Tick.QuadPart / (double)Freq->QuadPart;
     Frametime = Result;
     return Result;

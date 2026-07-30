@@ -6,6 +6,7 @@
 #include "Ultrawide.h"
 #include "Shader.h"
 #include "Patches.h"
+#include "Utils.h"
 
 void Patches::Install() {
     General::Install();

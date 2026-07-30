@@ -1,13 +1,7 @@
 #pragma once
-#include "Utils.h"
 
-class Shader {
-public:
-    static short ShaderHashOffset;
-    static void* InitShaders;
-    static const char* BasePath;
-    static const char* OTRPath;
+namespace Shader {
+    extern void* InitShaders;
 
-    static bool IsSkinnedShader(unsigned int Hash);
-    static void Install();
+    void Install();
 };
