@@ -30,8 +30,7 @@ This project aims to fix the PC-exclusive visual issues in Dead Rising 2 and Off
 ### Installation:
 - Download the latest release and extract the contents of the archive to your DR2/OTR directory, this works for both games. You do not need to rename the shader archives, the games get patched to read whichever one of the two archives is needed based on the game. This is to simplify installing the mod and to also make sure you do not accidentally get rid of the modded shaders if you verify your files.
 
-### Credits
-
+### Credits:
 - Shader Help: [miru97](https://github.com/mlleemiles)
 - Silent: [ModUtils](https://github.com/CookiePLMonster/ModUtils)
 - cursey: [safetyhook](https://github.com/cursey/safetyhook)
