@@ -3,7 +3,10 @@
 #include "General.h"
 #include "Utils.h"
 
-static constexpr int ShadowMapRes = 4096;
+static constexpr int ResMultiplier        =    4;
+static constexpr int ShadowMapRes         = 1024 * ResMultiplier;
+static constexpr int MirrorReflectionResX = 1024 * ResMultiplier;
+static constexpr int MirrorReflectionResY =  256 * ResMultiplier;
 
 static IDirect3DDevice9* pDevice;
 static int* DrawInst;
@@ -73,9 +76,17 @@ void GPU::Install() {
     GraphicsInst = *(int**)(Pattern.get_first(0x01));
     DrawInst = *(int**)(Pattern.get_first(0x06));
 
+    // Increase resolution of shadow map.
     Pattern = Utils::FindPattern("83 BE ? ? ? ? ? C7 86 ? ? ? ? ? ? ? ? C6 86");
     static auto ShadowRes = safetyhook::create_mid(Pattern.get_first(0x11), [](SafetyHookContext& ctx) {
         const short WidthOffset = General::IsOTR ? 0xD0 : 0xBC;
         *(int*)(ctx.esi + WidthOffset) = ShadowMapRes;
        });
+
+    // Increase resolution of mirror reflection texture.
+    Pattern = Utils::FindPattern("6A 19 C7 86 ? ? ? ? 00 00 00 00 8B 3D ? ? ? ? 68 00 01 00 00 68 00 04 00 00 8B CF E8");
+    Patch(Pattern.get_first(0x13), MirrorReflectionResY);
+    Patch(Pattern.get_first(0x18), MirrorReflectionResX);
+    Patch(Pattern.get_first(0x4B), MirrorReflectionResY);
+    Patch(Pattern.get_first(0x64), MirrorReflectionResX);
 }
