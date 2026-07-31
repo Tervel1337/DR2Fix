@@ -90,6 +90,6 @@ void GPU::Install() {
     Patch(Pattern.get_first(0x4B), MirrorReflectionResY);
     Patch(Pattern.get_first(0x64), MirrorReflectionResX);
 
-    // Change mirror reflection format from RGB555 to XRGB8888, to eliminate colour-banding.
+    // Change mirror reflection format from RGB565 to XRGB8888, to eliminate colour-banding.
     Patch(Pattern.get_first(0x40), {1});
 }
