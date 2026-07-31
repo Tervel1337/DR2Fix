@@ -18,7 +18,7 @@ This project aims to fix the PC-exclusive visual issues in Dead Rising 2 and Off
 - **Fixed font scaling:** The game will now have a correct font scale at above 1200p - if you play at a big resolution such as 4K the font will no longer be tiny. This fix also accounts for the Asian versions of the game so the font scale will be corrected with the needed overrides/additional scaling for them. The positioning itself still needs fixing because it will be very slightly off vertically (not really noticeable). 
 - **4K shadows:** The shadow map has had its resolution increased to 4096, reducing pixelation.
 - **Skipped logos:** The various splash screens that appear on start-up have been eliminated - it is now far quicker to start the game.
-- **SDL controller support:** Controller compatibility has been greatly improved - now, non-XInput controllers (such as the DualShock 4) work without any additional setup.
+- **Controller compatibility:** The game was limited to Xbox 360/One controllers - now, alternative controllers are supported, such as the DualShock 4 and Nintendo Switch Pro Controller.
 
 ### Misc:
 - **OTR co-op anim crash fix:** Backported a code difference from console to PC to prevent a rare animation load crash.
