@@ -2,6 +2,7 @@
 
 #define DIRECTINPUT_VERSION 0x800
 #include <dinput.h>
+#include <tchar.h>
 #include <xinput.h>
 #include <SDL3/SDL.h>
 
@@ -64,8 +65,8 @@ static HRESULT __stdcall EnumDevicesReplacement(const LPVOID self, const DWORD d
 	//   0x44260738 - Unknown Mad Catz Device
 	device_instance.guidProduct.Data1 = 0x028E045E;
 	device_instance.dwDevType = DI8DEVTYPE_GAMEPAD;
-	strcpy(device_instance.tszInstanceName, "SDL Gamepad 1");
-	strcpy(device_instance.tszProductName, "SDL Gamepad");
+	_tcscpy_s(device_instance.tszInstanceName, std::size(device_instance.tszInstanceName), _T("SDL Gamepad 1"));
+	_tcscpy_s(device_instance.tszProductName, std::size(device_instance.tszProductName), _T("SDL Gamepad"));
 
 	for (const auto &gamepad : gamepads)
 		if (gamepad != nullptr)

@@ -27,6 +27,9 @@ target_include_directories(DR2Fix PRIVATE
 	"Includes/safetyhook"
 )
 
+# Enable Unicode, to match the game's EXE.
+target_compile_definitions(DR2Fix PRIVATE UNICODE _UNICODE)
+
 set_target_properties(DR2Fix PROPERTIES CXX_STANDARD 23)
 
 # For the improved controller support, build and link a stripped-down SDL3.
