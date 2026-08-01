@@ -122,9 +122,18 @@ void GPU::Install() {
     DrawInst = *(int**)(Pattern.get_first(0x06));
 
     // Increase resolution of shadow map.
-    Pattern = Utils::FindPattern("6A 00 83 C0 01 6A 19 53 89 0C 85");
-    InterceptCall(Pattern.get_first(0x22), CreateTexture, &CreateTextureHijack);
-    InterceptCall(Pattern.get_first(0x50), CreateTextureRenderTarget, &CreateTextureRenderTargetHijack);
+    if (General::IsOTR)
+    {
+        Pattern = Utils::FindPattern("6A 00 03 C0 6A 19 03 C0 52");
+        InterceptCall(Pattern.get_first(0x18), CreateTexture, &CreateTextureHijack);
+        InterceptCall(Pattern.get_first(0x81), CreateTextureRenderTarget, &CreateTextureRenderTargetHijack);
+    }
+    else
+    {
+        Pattern = Utils::FindPattern("6A 00 83 C0 01 6A 19 53 89 0C 85");
+        InterceptCall(Pattern.get_first(0x22), CreateTexture, &CreateTextureHijack);
+        InterceptCall(Pattern.get_first(0x50), CreateTextureRenderTarget, &CreateTextureRenderTargetHijack);
+    }
 
     // Increase resolution of mirror reflection textures.
     // Also changes format from RGB565 to XRGB8888, to eliminate colour-banding.
