@@ -8,9 +8,7 @@ static const float AR16x9 = 1.78f;
 static const float AR32x9 = 3.55f;
 
 static float __fastcall GetUIAspectRatio(int* thisptr, void* Dummy) {
-    GPU::ResX = *(int*)(*GPU::GraphicsInst + 0xC);
-    GPU::ResY = *(int*)(*GPU::GraphicsInst + 0x10);
-    AspectRatio = (float)GPU::ResX / (float)GPU::ResY;
+    AspectRatio = (float)GPU::GetDisplayWidth() / (float)GPU::GetDisplayHeight();
     return AspectRatio > AR16x9 ? AR16x9 : AspectRatio;
 }
 

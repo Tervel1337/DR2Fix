@@ -1,9 +1,7 @@
 #pragma once
 
 namespace GPU {
-    extern int* GraphicsInst;
-    extern int ResX;
-    extern int ResY;
-
+    unsigned int GetDisplayWidth();
+    unsigned int GetDisplayHeight();
     void Install();
 };

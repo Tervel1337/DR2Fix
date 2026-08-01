@@ -31,7 +31,7 @@ static void FixWatchFont(float Scale) {
 }
 
 static float __fastcall FontScaleOverride(int* This, unsigned int FontHash, void* Dummy) {
-    float Scale = (GPU::ResY) / float(*FontRes);
+    float Scale = GPU::GetDisplayHeight() / float(*FontRes);
     if (!General::IsOTR) FixWatchFont(Scale);
     if (IsAsianLang(This)) {
         if (FontHash == ArialBlk46Hash) {

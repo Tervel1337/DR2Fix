@@ -4,19 +4,16 @@
 #include "Utils.h"
 
 static IDirect3DDevice9* pDevice;
+static int* GraphicsInst;
 static int* DrawInst;
 static short D3DDeviceOffset = 0x198;
 static D3DRENDERSTATETYPE AlphaRS;
 static DWORD AlphaRSValue;
 static void (*InitShaders)();
 
-int* GPU::GraphicsInst;
-int GPU::ResX;
-int GPU::ResY;
-
 static unsigned int ScaleResolution(unsigned int resolution)
 {
-    const int screen_width = *(int*)(*GPU::GraphicsInst + 0xC);
+    const int screen_width = GPU::GetDisplayWidth();
 
     // We scale based on the resolution so that we do not overwhelm low-end platforms with massive textures.
     // 1280x720:  1x
@@ -33,7 +30,7 @@ static unsigned int ScaleResolution(unsigned int resolution)
 
 static unsigned int CorrectTextureFormat(unsigned int format)
 {
-    const int screen_width = *(int*)(*GPU::GraphicsInst + 0xC);
+    const int screen_width = GPU::GetDisplayWidth();
 
     if (screen_width >= 1920)
         if (format == 3) // RGB565
@@ -45,7 +42,7 @@ static unsigned int CorrectTextureFormat(unsigned int format)
 static void GetGPUVendor() {
     if (General::IsOTR) D3DDeviceOffset += 0x100;
 
-    pDevice = *(IDirect3DDevice9**)(void*)(*GPU::GraphicsInst + D3DDeviceOffset);
+    pDevice = *(IDirect3DDevice9**)(void*)(*GraphicsInst + D3DDeviceOffset);
     if (pDevice) {
         IDirect3D9* pD3D;
         pDevice->GetDirect3D(&pD3D);
@@ -80,7 +77,7 @@ static void FixRenderStates(safetyhook::Context32& ctx) {
         pRenderTarget->GetDesc(&Desc);
 	const unsigned int ShadowMapRes = ScaleResolution(1024);
         /*unsigned int ShaderHash = *(unsigned int*)(*DrawInst + Shader::ShaderHashOffset);
-        if (Shader::IsSkinnedShader(ShaderHash) && Desc.Width == ResX && Desc.Height == ResY) {
+        if (Shader::IsSkinnedShader(ShaderHash) && Desc.Width == GPU::GetDisplayWidth() && Desc.Height == GPU::GetDisplayHeight()) {
             pDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
         }
         // no need to reset cullmode because the game will overwrite it anyhow
@@ -101,6 +98,16 @@ static int (__fastcall *CreateTextureRenderTarget)(void *self, void* dummy, int 
 static int __fastcall CreateTextureRenderTargetHijack(void *self, void* dummy, int width, int height, int format, int a5, unsigned int a6, int multisample_type)
 {
     return CreateTextureRenderTarget(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, multisample_type);
+}
+
+unsigned int GPU::GetDisplayWidth()
+{
+    return *(unsigned int*)(*GraphicsInst + 0xC);
+}
+
+unsigned int GPU::GetDisplayHeight()
+{
+    return *(unsigned int*)(*GraphicsInst + 0x10);
 }
 
 void GPU::Install() {
