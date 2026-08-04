@@ -140,4 +140,8 @@ void GPU::Install() {
     Pattern = Utils::FindPattern("6A 19 C7 86 ? ? ? ? 00 00 00 00 8B 3D ? ? ? ? 68 00 01 00 00 68 00 04 00 00 8B CF E8");
     InjectHook(Pattern.get_first(0x1E), &CreateTextureHijack);
     InjectHook(Pattern.get_first(0x70), &CreateTextureRenderTargetHijack);
+
+    // Increase resolution of survivor displays.
+    Pattern = Utils::FindPattern("6A 00 F3 0F 11 86 ? ? ? ? F3 0F 11 86 ? ? ? ? F3 0F 11 86 ? ? ? ? 8B 1D");
+    InjectHook(Pattern.get_first(0x2A), &CreateTextureRenderTargetHijack);
 }
