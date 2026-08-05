@@ -9,6 +9,7 @@ add_library(DR2Fix SHARED
 	"DR2Fix/General.cpp" "DR2Fix/General.h"
 	"DR2Fix/GPU.cpp" "DR2Fix/GPU.h"
 	"DR2Fix/Patches.cpp" "DR2Fix/Patches.h"
+	"DR2Fix/Settings.cpp" "DR2Fix/Settings.h"
 	"DR2Fix/Shader.cpp" "DR2Fix/Shader.h"
 	"DR2Fix/stdafx.h"
 	"DR2Fix/Structs.h"

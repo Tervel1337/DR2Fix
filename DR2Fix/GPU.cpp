@@ -1,4 +1,5 @@
 #include "GPU.h"
+#include "Settings.h"
 #include "Shader.h"
 #include "General.h"
 #include "Utils.h"
@@ -57,47 +58,6 @@ static short D3DDeviceOffset = 0x198;
 static D3DRENDERSTATETYPE AlphaRS;
 static DWORD AlphaRSValue;
 static void (*InitShaders)();
-
-// Settings
-
-enum SETTING : DWORD
-{
-    SETTING_MSAA_TYPE,
-    SETTING_FULLSCREEN,
-    SETTING_ZOMBIE_COUNTS,
-    SETTING_COMBINED_BLUR,
-    SETTING_TEXTURE_FILTERING,
-    SETTING_SHADOW_QUALITY
-};
-
-static BOOL *SettingsInitialized;
-static void *SettingsObject;
-static void (__fastcall *ResetSettings)(void *self, void* dummy);
-static void* (__fastcall *GetSettingInternal)(void *self, void* dummy, SETTING setting);
-
-static void HookSettings()
-{
-    // Extract, and create our own 'GetSetting' function.
-    // This function is inlined in the EXE, so we cannot use it as-is.
-    auto Pattern = Utils::FindPattern("F6 05 ? ? ? ? 01 75 11 83 0D ? ? ? ? 01 B9 ? ? ? ? E8 ? ? ? ? 6A 00");
-
-    SettingsInitialized = *(BOOL**)Pattern.get_first(2);
-    SettingsObject = *(void**)Pattern.get_first(0x45-0x35+1);
-    ResetSettings = (decltype(ResetSettings))ReadCallFrom(Pattern.get_first(0x4A-0x35));
-    GetSettingInternal = (decltype(GetSettingInternal))ReadCallFrom(Pattern.get_first(0x56-0x35));
-}
-
-static void* GetSetting(SETTING setting)
-{
-    if (!*SettingsInitialized)
-    {
-        *SettingsInitialized = TRUE;
-	ResetSettings(SettingsObject, nullptr);
-    }
-    return GetSettingInternal(SettingsObject, nullptr, setting);
-}
-
-// End of settings
 
 static unsigned int ScaleResolution(unsigned int resolution)
 {
@@ -189,7 +149,7 @@ static int __fastcall CreateTextureRenderTargetHD(void *self, void* dummy, int w
 
 static MULTISAMPLETYPE GetMultisampleType()
 {
-    return *static_cast<MULTISAMPLETYPE*>(GetSetting(SETTING_MSAA_TYPE));
+    return *static_cast<MULTISAMPLETYPE*>(Settings::GetValue(Settings::Value::MSAA_TYPE));
 }
 
 static int __fastcall CreateTextureDepthStencilHDMSAA(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label)
@@ -213,8 +173,6 @@ unsigned int GPU::GetDisplayHeight()
 }
 
 void GPU::Install() {
-    HookSettings();
-
     auto Pattern = Utils::FindPattern("E8 ? ? ? ? E8 ? ? ? ? 8B 3D ? ? ? ? 8B CF");
     InterceptCall(Pattern.get_first(0x5), InitShaders, &GetGPUVendor);
 
