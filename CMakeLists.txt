@@ -8,6 +8,7 @@ add_library(DR2Fix SHARED
 	"DR2Fix/Font.cpp" "DR2Fix/Font.h"
 	"DR2Fix/General.cpp" "DR2Fix/General.h"
 	"DR2Fix/GPU.cpp" "DR2Fix/GPU.h"
+	"DR2Fix/HD.cpp" "DR2Fix/HD.h"
 	"DR2Fix/Patches.cpp" "DR2Fix/Patches.h"
 	"DR2Fix/Settings.cpp" "DR2Fix/Settings.h"
 	"DR2Fix/Shader.cpp" "DR2Fix/Shader.h"
