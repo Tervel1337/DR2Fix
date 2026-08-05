@@ -3,6 +3,53 @@
 #include "General.h"
 #include "Utils.h"
 
+enum TEXTUREFORMAT : DWORD
+{
+    TEXTUREFORMAT_A8R8G8B8 = 0,
+    TEXTUREFORMAT_X8R8G8B8 = 1,
+    TEXTUREFORMAT_A4R4G4B4 = 2,
+    TEXTUREFORMAT_R5G6B5 = 3,
+    TEXTUREFORMAT_A1R5G5B5 = 4,
+    TEXTUREFORMAT_P8 = 5,
+    TEXTUREFORMAT_L8 = 7,
+    TEXTUREFORMAT_DXT1 = 8,
+    TEXTUREFORMAT_DXT3 = 9,
+    TEXTUREFORMAT_DXT5 = 10,
+    TEXTUREFORMAT_A16B16G16R16 = 16,
+    TEXTUREFORMAT_R16F = 17,
+    TEXTUREFORMAT_G16R16F = 18,
+    TEXTUREFORMAT_A16B16G16R16F = 19,
+    TEXTUREFORMAT_R32F = 20,
+    TEXTUREFORMAT_A32B32G32R32F = 22,
+    TEXTUREFORMAT_D16 = 23,
+    TEXTUREFORMAT_D24X8 = 24,
+    TEXTUREFORMAT_D24S8 = 25,
+    TEXTUREFORMAT_DXT5_2 = 31,
+    TEXTUREFORMAT_DXT5_3 = 32,
+    TEXTUREFORMAT_A8 = 33,
+    TEXTUREFORMAT_UNSUPPORTED = 34
+};
+
+enum MULTISAMPLETYPE : DWORD
+{
+    MULTISAMPLETYPE_NONE,
+    MULTISAMPLETYPE_2_SAMPLES,
+    MULTISAMPLETYPE_3_SAMPLES,
+    MULTISAMPLETYPE_4_SAMPLES,
+    MULTISAMPLETYPE_5_SAMPLES,
+    MULTISAMPLETYPE_6_SAMPLES,
+    MULTISAMPLETYPE_7_SAMPLES,
+    MULTISAMPLETYPE_8_SAMPLES,
+    MULTISAMPLETYPE_9_SAMPLES,
+    MULTISAMPLETYPE_10_SAMPLES,
+    MULTISAMPLETYPE_11_SAMPLES,
+    MULTISAMPLETYPE_12_SAMPLES,
+    MULTISAMPLETYPE_13_SAMPLES,
+    MULTISAMPLETYPE_14_SAMPLES,
+    MULTISAMPLETYPE_15_SAMPLES,
+    MULTISAMPLETYPE_16_SAMPLES
+};
+
 static IDirect3DDevice9* pDevice;
 static int* GraphicsInst;
 static int* DrawInst;
@@ -28,13 +75,13 @@ static unsigned int ScaleResolution(unsigned int resolution)
     return resolution;
 }
 
-static unsigned int CorrectTextureFormat(unsigned int format)
+static TEXTUREFORMAT CorrectTextureFormat(TEXTUREFORMAT format)
 {
     const int screen_width = GPU::GetDisplayWidth();
 
     if (screen_width >= 1920)
-        if (format == 3) // RGB565
-            format = 1;  // XRGB8888
+        if (format == TEXTUREFORMAT_R5G6B5)
+            format = TEXTUREFORMAT_X8R8G8B8;
 
     return format;
 }
@@ -86,16 +133,16 @@ static void FixRenderStates(safetyhook::Context32& ctx) {
     }
 }
 
-static int (__fastcall *CreateTextureDepthStencil)(void *self, void* dummy, int width, int height, int format, int a5, int a6, int multisample_type, const char *label);
+static int (__fastcall *CreateTextureDepthStencil)(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label);
 
-static int __fastcall CreateTextureDepthStencilHijack(void *self, void* dummy, int width, int height, int format, int a5, int a6, int multisample_type, const char *label)
+static int __fastcall CreateTextureDepthStencilHijack(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label)
 {
     return CreateTextureDepthStencil(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, multisample_type, label);
 }
 
-static int (__fastcall *CreateTextureRenderTarget)(void *self, void* dummy, int width, int height, int format, int a5, unsigned int a6, int multisample_type);
+static int (__fastcall *CreateTextureRenderTarget)(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, unsigned int a6, MULTISAMPLETYPE multisample_type);
 
-static int __fastcall CreateTextureRenderTargetHijack(void *self, void* dummy, int width, int height, int format, int a5, unsigned int a6, int multisample_type)
+static int __fastcall CreateTextureRenderTargetHijack(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, unsigned int a6, MULTISAMPLETYPE multisample_type)
 {
     return CreateTextureRenderTarget(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, multisample_type);
 }
