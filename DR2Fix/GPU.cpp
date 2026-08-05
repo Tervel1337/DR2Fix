@@ -86,11 +86,11 @@ static void FixRenderStates(safetyhook::Context32& ctx) {
     }
 }
 
-static int (__fastcall *CreateTexture)(void *self, void* dummy, int width, int height, int format, int a5, int a6, int multisample_type, const char *label);
+static int (__fastcall *CreateTextureDepthStencil)(void *self, void* dummy, int width, int height, int format, int a5, int a6, int multisample_type, const char *label);
 
-static int __fastcall CreateTextureHijack(void *self, void* dummy, int width, int height, int format, int a5, int a6, int multisample_type, const char *label)
+static int __fastcall CreateTextureDepthStencilHijack(void *self, void* dummy, int width, int height, int format, int a5, int a6, int multisample_type, const char *label)
 {
-    return CreateTexture(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, multisample_type, label);
+    return CreateTextureDepthStencil(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, multisample_type, label);
 }
 
 static int (__fastcall *CreateTextureRenderTarget)(void *self, void* dummy, int width, int height, int format, int a5, unsigned int a6, int multisample_type);
@@ -125,20 +125,20 @@ void GPU::Install() {
     if (General::IsOTR)
     {
         Pattern = Utils::FindPattern("6A 00 03 C0 6A 19 03 C0 52");
-        InterceptCall(Pattern.get_first(0x18), CreateTexture, &CreateTextureHijack);
+        InterceptCall(Pattern.get_first(0x18), CreateTextureDepthStencil, &CreateTextureDepthStencilHijack);
         InterceptCall(Pattern.get_first(0x81), CreateTextureRenderTarget, &CreateTextureRenderTargetHijack);
     }
     else
     {
         Pattern = Utils::FindPattern("6A 00 83 C0 01 6A 19 53 89 0C 85");
-        InterceptCall(Pattern.get_first(0x22), CreateTexture, &CreateTextureHijack);
+        InterceptCall(Pattern.get_first(0x22), CreateTextureDepthStencil, &CreateTextureDepthStencilHijack);
         InterceptCall(Pattern.get_first(0x50), CreateTextureRenderTarget, &CreateTextureRenderTargetHijack);
     }
 
     // Increase resolution of mirror reflection textures.
     // Also changes format from RGB565 to XRGB8888, to eliminate colour-banding.
     Pattern = Utils::FindPattern("6A 19 C7 86 ? ? ? ? 00 00 00 00 8B 3D ? ? ? ? 68 00 01 00 00 68 00 04 00 00 8B CF E8");
-    InjectHook(Pattern.get_first(0x1E), &CreateTextureHijack);
+    InjectHook(Pattern.get_first(0x1E), &CreateTextureDepthStencilHijack);
     InjectHook(Pattern.get_first(0x70), &CreateTextureRenderTargetHijack);
 
     // Increase resolution of survivor displays.
