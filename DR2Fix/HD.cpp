@@ -98,9 +98,8 @@ unsigned int HD::GetScaledResolution(unsigned int resolution)
 
 static TEXTUREFORMAT CorrectTextureFormat(TEXTUREFORMAT format)
 {
-    if (GetResolutionQuality() != ResolutionQuality::LOW)
-        if (format == TEXTUREFORMAT_R5G6B5)
-            format = TEXTUREFORMAT_X8R8G8B8;
+    if (format == TEXTUREFORMAT_R5G6B5)
+        format = TEXTUREFORMAT_X8R8G8B8;
 
     return format;
 }
