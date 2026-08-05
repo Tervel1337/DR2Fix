@@ -52,28 +52,53 @@ enum MULTISAMPLETYPE : DWORD
     MULTISAMPLETYPE_16_SAMPLES
 };
 
-unsigned int HD::GetScaledResolution(unsigned int resolution)
+enum class ResolutionQuality
+{
+    LOW,
+    MEDIUM,
+    HIGH
+};
+
+static ResolutionQuality GetResolutionQuality()
 {
     const int screen_width = GPU::GetDisplayWidth();
 
+    if (screen_width >= 2560)
+        return ResolutionQuality::HIGH;
+    else if (screen_width >= 1920)
+        return ResolutionQuality::MEDIUM;
+    else
+        return ResolutionQuality::LOW;
+}
+
+unsigned int HD::GetScaledResolution(unsigned int resolution)
+{
     // We scale based on the resolution so that we do not overwhelm low-end platforms with massive textures.
     // 1280x720:  1x
     // 1920x1080: 2x
     // 2560x1440: 4x
     // There is no 3x because we need to maintain powers of two.
-    if (screen_width >= 2560)
-        resolution <<= 2;
-    else if (screen_width >= 1920)
-        resolution <<= 1;
+    switch (GetResolutionQuality())
+    {
+        case ResolutionQuality::HIGH:
+            resolution <<= 2;
+            break;
+
+        case ResolutionQuality::MEDIUM:
+            resolution <<= 1;
+            break;
+
+        case ResolutionQuality::LOW:
+            resolution <<= 0;
+            break;
+    }
 
     return resolution;
 }
 
 static TEXTUREFORMAT CorrectTextureFormat(TEXTUREFORMAT format)
 {
-    const int screen_width = GPU::GetDisplayWidth();
-
-    if (screen_width >= 1920)
+    if (GetResolutionQuality() != ResolutionQuality::LOW)
         if (format == TEXTUREFORMAT_R5G6B5)
             format = TEXTUREFORMAT_X8R8G8B8;
 
@@ -95,6 +120,7 @@ static int __fastcall CreateTextureRenderTargetHD(void *self, void* dummy, int w
 
 static MULTISAMPLETYPE GetMultisampleType()
 {
+    // Use whatever level of MSAA the user has selected in the settings.
     return *static_cast<MULTISAMPLETYPE*>(Settings::GetValue(Settings::Value::MSAA_TYPE));
 }
 
