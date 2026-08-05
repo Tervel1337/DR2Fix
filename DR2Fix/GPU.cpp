@@ -163,7 +163,7 @@ static void FixRenderStates(safetyhook::Context32& ctx) {
     if (pRenderTarget) {
         D3DSURFACE_DESC Desc;
         pRenderTarget->GetDesc(&Desc);
-	const unsigned int ShadowMapRes = ScaleResolution(1024);
+        const unsigned int ShadowMapRes = ScaleResolution(1024);
         /*unsigned int ShaderHash = *(unsigned int*)(*DrawInst + Shader::ShaderHashOffset);
         if (Shader::IsSkinnedShader(ShaderHash) && Desc.Width == GPU::GetDisplayWidth() && Desc.Height == GPU::GetDisplayHeight()) {
             pDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
