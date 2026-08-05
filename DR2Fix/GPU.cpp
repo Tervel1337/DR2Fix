@@ -58,6 +58,47 @@ static D3DRENDERSTATETYPE AlphaRS;
 static DWORD AlphaRSValue;
 static void (*InitShaders)();
 
+// Settings
+
+enum SETTING : DWORD
+{
+    SETTING_MSAA_TYPE,
+    SETTING_FULLSCREEN,
+    SETTING_ZOMBIE_COUNTS,
+    SETTING_COMBINED_BLUR,
+    SETTING_TEXTURE_FILTERING,
+    SETTING_SHADOW_QUALITY
+};
+
+static BOOL *SettingsInitialized;
+static void *SettingsObject;
+static void (__fastcall *ResetSettings)(void *self, void* dummy);
+static void* (__fastcall *GetSettingInternal)(void *self, void* dummy, SETTING setting);
+
+static void HookSettings()
+{
+    // Extract, and create our own 'GetSetting' function.
+    // This function is inlined in the EXE, so we cannot use it as-is.
+    auto Pattern = Utils::FindPattern("F6 05 ? ? ? ? 01 75 11 83 0D ? ? ? ? 01 B9 ? ? ? ? E8 ? ? ? ? 6A 00");
+
+    SettingsInitialized = *(BOOL**)Pattern.get_first(2);
+    SettingsObject = *(void**)Pattern.get_first(0x45-0x35+1);
+    ResetSettings = (decltype(ResetSettings))ReadCallFrom(Pattern.get_first(0x4A-0x35));
+    GetSettingInternal = (decltype(GetSettingInternal))ReadCallFrom(Pattern.get_first(0x56-0x35));
+}
+
+static void* GetSetting(SETTING setting)
+{
+    if (!*SettingsInitialized)
+    {
+        *SettingsInitialized = TRUE;
+	ResetSettings(SettingsObject, nullptr);
+    }
+    return GetSettingInternal(SettingsObject, nullptr, setting);
+}
+
+// End of settings
+
 static unsigned int ScaleResolution(unsigned int resolution)
 {
     const int screen_width = GPU::GetDisplayWidth();
@@ -146,14 +187,19 @@ static int __fastcall CreateTextureRenderTargetHD(void *self, void* dummy, int w
     return CreateTextureRenderTarget(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, multisample_type);
 }
 
+static MULTISAMPLETYPE GetMultisampleType()
+{
+    return *static_cast<MULTISAMPLETYPE*>(GetSetting(SETTING_MSAA_TYPE));
+}
+
 static int __fastcall CreateTextureDepthStencilHDMSAA(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label)
 {
-    return CreateTextureDepthStencil(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, MULTISAMPLETYPE_4_SAMPLES, label);
+    return CreateTextureDepthStencil(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, GetMultisampleType(), label);
 }
 
 static int __fastcall CreateTextureRenderTargetHDMSAA(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, unsigned int a6, MULTISAMPLETYPE multisample_type)
 {
-    return CreateTextureRenderTarget(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, MULTISAMPLETYPE_4_SAMPLES);
+    return CreateTextureRenderTarget(self, dummy, ScaleResolution(width), ScaleResolution(height), CorrectTextureFormat(format), a5, a6, GetMultisampleType());
 }
 
 unsigned int GPU::GetDisplayWidth()
@@ -167,6 +213,8 @@ unsigned int GPU::GetDisplayHeight()
 }
 
 void GPU::Install() {
+    HookSettings();
+
     auto Pattern = Utils::FindPattern("E8 ? ? ? ? E8 ? ? ? ? 8B 3D ? ? ? ? 8B CF");
     InterceptCall(Pattern.get_first(0x5), InitShaders, &GetGPUVendor);
 
@@ -192,12 +240,14 @@ void GPU::Install() {
     }
 
     // Increase resolution of mirror reflection textures.
+    // Also applies MSAA to eliminate aliasing.
     // Also changes format from RGB565 to XRGB8888, to eliminate colour-banding.
     Pattern = Utils::FindPattern("6A 19 C7 86 ? ? ? ? 00 00 00 00 8B 3D ? ? ? ? 68 00 01 00 00 68 00 04 00 00 8B CF E8");
     InjectHook(Pattern.get_first(0x1E), &CreateTextureDepthStencilHDMSAA);
     InjectHook(Pattern.get_first(0x70), &CreateTextureRenderTargetHDMSAA);
 
     // Increase resolution of survivor displays.
+    // Also applies MSAA to eliminate aliasing.
     Pattern = Utils::FindPattern("6A 00 F3 0F 11 86 ? ? ? ? F3 0F 11 86 ? ? ? ? F3 0F 11 86 ? ? ? ? 8B 1D");
     InjectHook(Pattern.get_first(0x2A), &CreateTextureRenderTargetHDMSAA);
 }
