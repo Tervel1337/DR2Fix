@@ -133,6 +133,23 @@ static int __fastcall CreateTextureRenderTargetHDMSAA(void *self, void* dummy, i
     return CreateTextureRenderTarget(self, dummy, HD::GetScaledResolution(width), HD::GetScaledResolution(height), CorrectTextureFormat(format), a5, a6, GetMultisampleType());
 }
 
+static void (__fastcall *RegisterDepthStencil)(void *self, void* dummy, int render_thing_id, int depth_stencil_texture_index);
+
+static void* (__fastcall *CreateSurvivorDisplayTexture)(void *self, void* dummy, int survivor_display_index, int render_thing_id, int size);
+
+static void* __fastcall CreateSurvivorDisplayTextureHijack(void *self, void* dummy, int survivor_display_index, int render_thing_id, int size)
+{
+    // Create the render target.
+    void* const result = CreateSurvivorDisplayTexture(self, dummy, survivor_display_index, render_thing_id, size);
+
+    // Now create the depth/stencil buffer.
+    void* const graphics_instance = GPU::GetGraphicsInst();
+    const int texture_index = CreateTextureDepthStencilHDMSAA(graphics_instance, nullptr, size, size, TEXTUREFORMAT_D24S8, 0, 0, MULTISAMPLETYPE_NONE, "Survivor display depth buffer");
+    RegisterDepthStencil(graphics_instance, nullptr, render_thing_id, texture_index);
+
+    return result;
+}
+
 void HD::Install()
 {
     // Increase resolution of shadow map.
@@ -160,4 +177,11 @@ void HD::Install()
     // Also applies MSAA to eliminate aliasing.
     Pattern = Utils::FindPattern("6A 00 F3 0F 11 86 ? ? ? ? F3 0F 11 86 ? ? ? ? F3 0F 11 86 ? ? ? ? 8B 1D");
     InjectHook(Pattern.get_first(0x2A), &CreateTextureRenderTargetHDMSAA);
+
+    // Give the survivor display a depth buffer, to fix layering issues.
+    Pattern = Utils::FindPattern("FF FF FF FF E8 ? ? ? ? 6A FF 6A 02 8B CE");
+    RegisterDepthStencil = static_cast<decltype(RegisterDepthStencil)>(ReadCallFrom(Pattern.get_first(4)));
+    Pattern = Utils::FindPattern("6A 02 53 6A 03 68 ? ? 00 00 E8");
+    InterceptCall(Pattern.get_first(0x1F), CreateSurvivorDisplayTexture, &CreateSurvivorDisplayTextureHijack);
+
 }

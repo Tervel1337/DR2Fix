@@ -5,7 +5,7 @@
 #include "Utils.h"
 
 static IDirect3DDevice9* pDevice;
-static int* GraphicsInst;
+static char** GraphicsInst;
 static int* DrawInst;
 static short D3DDeviceOffset = 0x198;
 static D3DRENDERSTATETYPE AlphaRS;
@@ -15,7 +15,7 @@ static void (*InitShaders)();
 static void GetGPUVendor() {
     if (General::IsOTR) D3DDeviceOffset += 0x100;
 
-    pDevice = *(IDirect3DDevice9**)(void*)(*GraphicsInst + D3DDeviceOffset);
+    pDevice = *(IDirect3DDevice9**)(GPU::GetGraphicsInst() + D3DDeviceOffset);
     if (pDevice) {
         IDirect3D9* pD3D;
         pDevice->GetDirect3D(&pD3D);
@@ -59,14 +59,19 @@ static void FixRenderStates(safetyhook::Context32& ctx) {
     }
 }
 
+char* GPU::GetGraphicsInst()
+{
+    return *GraphicsInst;
+}
+
 unsigned int GPU::GetDisplayWidth()
 {
-    return *(unsigned int*)(*GraphicsInst + 0xC);
+    return *(unsigned int*)(GetGraphicsInst() + 0xC);
 }
 
 unsigned int GPU::GetDisplayHeight()
 {
-    return *(unsigned int*)(*GraphicsInst + 0x10);
+    return *(unsigned int*)(GetGraphicsInst() + 0x10);
 }
 
 void GPU::Install() {
@@ -77,6 +82,6 @@ void GPU::Install() {
     static SafetyHookMid RSFix = safetyhook::create_mid(Pattern.get_first(), &FixRenderStates);
 
     Pattern = Utils::FindPattern("A3 ? ? ? ? A3 ? ? ? ? C3 33 C0");
-    GraphicsInst = *(int**)(Pattern.get_first(0x01));
+    GraphicsInst = *(char***)(Pattern.get_first(0x01));
     DrawInst = *(int**)(Pattern.get_first(0x06));
 }
