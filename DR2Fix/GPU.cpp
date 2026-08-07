@@ -49,12 +49,14 @@ static void FixRenderStates(safetyhook::Context32& ctx) {
         D3DSURFACE_DESC Desc;
         pRenderTarget->GetDesc(&Desc);
         const unsigned int ShadowMapRes = HD::GetScaledResolution(1024);
-        /*unsigned int ShaderHash = *(unsigned int*)(*DrawInst + Shader::ShaderHashOffset);
+        const unsigned int SurvivorDisplayRes = HD::GetScaledResolution(64);
+        /*unsigned int ShaderHash = *(unsigned int*)(*DrawInst + Shader::GetShaderHashOffset());
         if (Shader::IsSkinnedShader(ShaderHash) && Desc.Width == GPU::GetDisplayWidth() && Desc.Height == GPU::GetDisplayHeight()) {
             pDevice->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
         }
         // no need to reset cullmode because the game will overwrite it anyhow
         else*/ if (Desc.Width == ShadowMapRes * 4 && Desc.Height == ShadowMapRes) pDevice->SetRenderState(D3DRS_ALPHABLENDENABLE, FALSE);
+
         pRenderTarget->Release();
     }
 }

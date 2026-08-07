@@ -6,7 +6,12 @@ static short ShaderHashOffset = 0x414;
 static const char* BasePath = "data/shaders/deadrising-ps-base.big";
 static const char* OTRPath = "data/shaders/deadrising-ps-otr.big";
 
-static bool IsSkinnedShader(unsigned int Hash) {
+short Shader::GetShaderHashOffset()
+{
+    return ShaderHashOffset;
+}
+
+bool Shader::IsSkinnedShader(unsigned int Hash) {
     // these are the name hashes so if you mod those shaders they won't change and also I don't see the point in computing them
     if (Hash == 0xB9CB5CE0 // ProtoSkinnedEye
         || Hash == 0xEC541DC0 // ProtoSkinnedSkin
