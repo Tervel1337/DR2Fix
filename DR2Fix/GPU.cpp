@@ -61,6 +61,52 @@ static void FixRenderStates(safetyhook::Context32& ctx) {
     }
 }
 
+static bool force_reverse_cull_mode;
+static void (__fastcall *ReverseCullMode)(void *self);
+
+static void (__fastcall *RenderMeshBatch)(void *self, void *dummy, int mesh_batch_index);
+
+static void __fastcall RenderMeshBatchHijack(void *self, void *dummy, int mesh_batch_index)
+{
+    const bool is_actor_icon = mesh_batch_index >= 42 && mesh_batch_index <= 50;
+
+    force_reverse_cull_mode = is_actor_icon;
+    RenderMeshBatch(self, dummy, mesh_batch_index);
+    force_reverse_cull_mode = false;
+}
+
+static void (__fastcall *RenderMesh)(void *self, void *dummy, void *mesh_batch, void *mesh);
+
+static void __fastcall RenderMeshHijack(void *self, void *dummy, void *mesh_batch, void *mesh)
+{
+    const bool reverse_cull_mode = force_reverse_cull_mode ^ static_cast<bool*>(mesh)[0x36];
+
+    if (reverse_cull_mode)
+        ReverseCullMode(self);
+
+    RenderMesh(self, dummy, mesh_batch, mesh);
+
+    if (reverse_cull_mode)
+        ReverseCullMode(self);
+}
+
+static void FixActorIconCullMode()
+{
+    // The "actor icons" (survivor display pop-ups) are horizontally flipped, meaning the
+    // culling mode needs to be reversed to account for the inverted vertex winding.
+    auto Pattern = Utils::FindPattern("80 7E ? 00 74 ? 83 3E FE 74 ? 53 8B CF E8");
+    InterceptCall(Pattern.get_first(14), RenderMeshBatch, &RenderMeshBatchHijack);
+
+    Pattern = Utils::FindPattern("E8 ? ? ? ? 83 7D 00 FF 74 ? 83 BE ? 00 00 00 00 74");
+    InterceptCall(Pattern.get_first(24), RenderMesh, &RenderMeshHijack);
+
+    ReadCall(reinterpret_cast<uintptr_t>(RenderMesh) + (General::IsOTR ? 0x1E : 0x10), ReverseCullMode);
+
+    // Disable the old calls to ReverseCullMode, now that we're responsible for calling it instead.
+    Nop(reinterpret_cast<uintptr_t>(RenderMesh) + (General::IsOTR ? 0x1E : 0x10), 5);
+    Nop(reinterpret_cast<uintptr_t>(RenderMesh) + (General::IsOTR ? 0xE5 : 0xF1), 5);
+}
+
 char* GPU::GetGraphicsInst()
 {
     return *GraphicsInst;
@@ -86,4 +132,6 @@ void GPU::Install() {
     Pattern = Utils::FindPattern("A3 ? ? ? ? A3 ? ? ? ? C3 33 C0");
     GraphicsInst = *(char***)(Pattern.get_first(0x01));
     DrawInst = *(int**)(Pattern.get_first(0x06));
+
+    FixActorIconCullMode();
 }
