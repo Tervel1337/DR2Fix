@@ -12,12 +12,25 @@ static double __cdecl GetTimeForTick(_LARGE_INTEGER Tick) {
     return Result;
 }
 
+static double __fastcall ComputePushableRotationSpeed(float *self, void *dummy, unsigned int *thing) {
+    const auto value = thing[General::IsOTR ? 0x56 : 0x47];
+
+    if (value > 0xF)
+        return 0.0;
+
+    return self[2 + value] * Frametime / TargetFT;
+}
+
 void Timing::Install() {
     auto Pattern = Utils::FindPattern("68 ? ? ? ? FF 15 ? ? ? ? 68 ? ? ? ? FF 15 ? ? ? ? 33 C0");
     Freq = *(LARGE_INTEGER**)(Pattern.get_first(0x01));
 
     Pattern = Utils::FindPattern("E8 ? ? ? ? ? ? ? ? 8B 0D ? ? ? ? 83 C4 ? 57");
     InjectHook(Pattern.get_first(), &GetTimeForTick, HookType::Call);
+
+    // Fix pushable objects' turning speed being tied to frame-rate.
+    Pattern = Utils::FindPattern("8B 44 24 04 8B 80 ? ? 00 00 83 F8 0F 77 07 D9 44 81 08 C2 04 00 D9 EE C2 04 00");
+    InjectHook(Pattern.get_first(), &ComputePushableRotationSpeed, HookType::Jump);
 
     Pattern = Utils::FindPattern("F3 0F 11 90 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? F3 0F 10 82");
     static auto ExposureFix = safetyhook::create_mid(Pattern.get_first(-0x40), [](SafetyHookContext& ctx) {

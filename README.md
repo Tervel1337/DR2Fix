@@ -23,6 +23,7 @@ This project aims to fix the PC-exclusive visual issues in Dead Rising 2 and Off
 - **Controller compatibility:** The game was limited to Xbox 360/One controllers - now, alternative controllers are supported, such as the DualShock 4 and Nintendo Switch Pro Controller.
 
 ### Misc:
+- **Fixed pushable turning speed:** The speed at which items like wheelchairs turn was tied to the framerate, making it far too fast.
 - **OTR co-op anim crash fix:** Backported a code difference from console to PC to prevent a rare animation load crash.
 
 ### Recommendations:
