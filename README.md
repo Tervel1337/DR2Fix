@@ -19,7 +19,7 @@ This project aims to fix the PC-exclusive visual issues in Dead Rising 2 and Off
 - **Higher shadow resolution:** Reduces pixelation. Note that this scales with display resolution, so that low-end platforms like the Steam Deck are not overwhelmed.
 - **Improved mirrors:** Increased resolution, eliminated color-banding, and added anti-aliasing.
 - **Improved survivor pop-ups:** Increased resolution, added anti-aliasing, fixed body parts and clothing not layering correctly.
-- **Skipped logos (DR2 only):** The various splash screens that appear on start-up have been eliminated - it is now far quicker to start the game.
+- **Skipped logos:** The various splash screens that appear on start-up have been eliminated - it is now far quicker to start the game.
 - **Controller compatibility:** The game was limited to Xbox 360/One controllers - now, alternative controllers are supported, such as the DualShock 4 and Nintendo Switch Pro Controller.
 
 ### Misc:
