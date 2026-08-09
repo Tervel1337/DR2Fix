@@ -19,8 +19,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
 	return TRUE;
 }
 
-extern "C" __declspec(dllexport) void InitializeASI()
-{
+extern "C" __declspec(dllexport) void InitializeASI() {
 	// This should not be done in DllMain, otherwise the game will fail to boot on the Steam Deck!
 	// Microsoft's documentation says that a DLL should do as little as possible in DllMain:
 	// https://learn.microsoft.com/en-us/windows/win32/dlls/dllmain

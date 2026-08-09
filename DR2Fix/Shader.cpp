@@ -6,8 +6,7 @@ static short ShaderHashOffset = 0x414;
 static const char* BasePath = "data/shaders/deadrising-ps-base.big";
 static const char* OTRPath = "data/shaders/deadrising-ps-otr.big";
 
-short Shader::GetShaderHashOffset()
-{
+short Shader::GetShaderHashOffset() {
     return ShaderHashOffset;
 }
 

@@ -5,8 +5,7 @@
 #include "Settings.h"
 #include "Utils.h"
 
-enum TEXTUREFORMAT : DWORD
-{
+enum TEXTUREFORMAT : DWORD {
     TEXTUREFORMAT_A8R8G8B8 = 0,
     TEXTUREFORMAT_X8R8G8B8 = 1,
     TEXTUREFORMAT_A4R4G4B4 = 2,
@@ -32,8 +31,7 @@ enum TEXTUREFORMAT : DWORD
     TEXTUREFORMAT_UNSUPPORTED = 34
 };
 
-enum MULTISAMPLETYPE : DWORD
-{
+enum MULTISAMPLETYPE : DWORD {
     MULTISAMPLETYPE_NONE,
     MULTISAMPLETYPE_2_SAMPLES,
     MULTISAMPLETYPE_3_SAMPLES,
@@ -52,15 +50,13 @@ enum MULTISAMPLETYPE : DWORD
     MULTISAMPLETYPE_16_SAMPLES
 };
 
-enum class ResolutionQuality
-{
+enum class ResolutionQuality {
     LOW,
     MEDIUM,
     HIGH
 };
 
-static ResolutionQuality GetResolutionQuality()
-{
+static ResolutionQuality GetResolutionQuality() {
     const int screen_width = GPU::GetDisplayWidth();
 
     if (screen_width >= 2560)
@@ -71,15 +67,13 @@ static ResolutionQuality GetResolutionQuality()
         return ResolutionQuality::LOW;
 }
 
-unsigned int HD::GetScaledResolution(unsigned int resolution)
-{
+unsigned int HD::GetScaledResolution(unsigned int resolution) {
     // We scale based on the resolution so that we do not overwhelm low-end platforms with massive textures.
     // 1280x720:  1x
     // 1920x1080: 2x
     // 2560x1440: 4x
     // There is no 3x because we need to maintain powers of two.
-    switch (GetResolutionQuality())
-    {
+    switch (GetResolutionQuality()) {
         case ResolutionQuality::HIGH:
             resolution <<= 2;
             break;
@@ -96,8 +90,7 @@ unsigned int HD::GetScaledResolution(unsigned int resolution)
     return resolution;
 }
 
-static TEXTUREFORMAT CorrectTextureFormat(TEXTUREFORMAT format)
-{
+static TEXTUREFORMAT CorrectTextureFormat(TEXTUREFORMAT format) {
     if (format == TEXTUREFORMAT_R5G6B5)
         format = TEXTUREFORMAT_X8R8G8B8;
 
@@ -107,29 +100,24 @@ static TEXTUREFORMAT CorrectTextureFormat(TEXTUREFORMAT format)
 static int (__fastcall *CreateTextureDepthStencil)(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label);
 static int (__fastcall *CreateTextureRenderTarget)(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, unsigned int a6, MULTISAMPLETYPE multisample_type);
 
-static int __fastcall CreateTextureDepthStencilHD(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label)
-{
+static int __fastcall CreateTextureDepthStencilHD(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label) {
     return CreateTextureDepthStencil(self, dummy, HD::GetScaledResolution(width), HD::GetScaledResolution(height), CorrectTextureFormat(format), a5, a6, multisample_type, label);
 }
 
-static int __fastcall CreateTextureRenderTargetHD(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, unsigned int a6, MULTISAMPLETYPE multisample_type)
-{
+static int __fastcall CreateTextureRenderTargetHD(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, unsigned int a6, MULTISAMPLETYPE multisample_type) {
     return CreateTextureRenderTarget(self, dummy, HD::GetScaledResolution(width), HD::GetScaledResolution(height), CorrectTextureFormat(format), a5, a6, multisample_type);
 }
 
-static MULTISAMPLETYPE GetMultisampleType()
-{
+static MULTISAMPLETYPE GetMultisampleType() {
     // Use whatever level of MSAA the user has selected in the settings.
     return *static_cast<MULTISAMPLETYPE*>(Settings::GetValue(Settings::Value::MSAA_TYPE));
 }
 
-static int __fastcall CreateTextureDepthStencilHDMSAA(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label)
-{
+static int __fastcall CreateTextureDepthStencilHDMSAA(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, int a6, MULTISAMPLETYPE multisample_type, const char *label) {
     return CreateTextureDepthStencil(self, dummy, HD::GetScaledResolution(width), HD::GetScaledResolution(height), CorrectTextureFormat(format), a5, a6, GetMultisampleType(), label);
 }
 
-static int __fastcall CreateTextureRenderTargetHDMSAA(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, unsigned int a6, MULTISAMPLETYPE multisample_type)
-{
+static int __fastcall CreateTextureRenderTargetHDMSAA(void *self, void* dummy, int width, int height, TEXTUREFORMAT format, int a5, unsigned int a6, MULTISAMPLETYPE multisample_type) {
     return CreateTextureRenderTarget(self, dummy, HD::GetScaledResolution(width), HD::GetScaledResolution(height), CorrectTextureFormat(format), a5, a6, GetMultisampleType());
 }
 
@@ -137,8 +125,7 @@ static void (__fastcall *RegisterDepthStencil)(void *self, void* dummy, int rend
 
 static void* (__fastcall *CreateSurvivorDisplayTexture)(void *self, void* dummy, int survivor_display_index, int render_thing_id, int size);
 
-static void* __fastcall CreateSurvivorDisplayTextureHijack(void *self, void* dummy, int survivor_display_index, int render_thing_id, int size)
-{
+static void* __fastcall CreateSurvivorDisplayTextureHijack(void *self, void* dummy, int survivor_display_index, int render_thing_id, int size) {
     // Create the render target.
     void* const result = CreateSurvivorDisplayTexture(self, dummy, survivor_display_index, render_thing_id, size);
 
@@ -150,17 +137,14 @@ static void* __fastcall CreateSurvivorDisplayTextureHijack(void *self, void* dum
     return result;
 }
 
-void HD::Install()
-{
+void HD::Install() {
     // Increase resolution of shadow map.
-    if (General::IsOTR)
-    {
+    if (General::IsOTR) {
         auto Pattern = Utils::FindPattern("6A 00 03 C0 6A 19 03 C0 52");
         InterceptCall(Pattern.get_first(0x18), CreateTextureDepthStencil, &CreateTextureDepthStencilHD);
         InterceptCall(Pattern.get_first(0x81), CreateTextureRenderTarget, &CreateTextureRenderTargetHD);
     }
-    else
-    {
+    else {
         auto Pattern = Utils::FindPattern("6A 00 83 C0 01 6A 19 53 89 0C 85");
         InterceptCall(Pattern.get_first(0x22), CreateTextureDepthStencil, &CreateTextureDepthStencilHD);
         InterceptCall(Pattern.get_first(0x50), CreateTextureRenderTarget, &CreateTextureRenderTargetHD);
@@ -183,5 +167,4 @@ void HD::Install()
     RegisterDepthStencil = static_cast<decltype(RegisterDepthStencil)>(ReadCallFrom(Pattern.get_first(4)));
     Pattern = Utils::FindPattern("6A 02 53 6A 03 68 ? ? 00 00 E8");
     InterceptCall(Pattern.get_first(0x1F), CreateSurvivorDisplayTexture, &CreateSurvivorDisplayTextureHijack);
-
 }

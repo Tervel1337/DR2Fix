@@ -2,10 +2,8 @@
 
 #include "Utils.h"
 
-namespace Settings
-{
-    enum class Value : DWORD
-    {
+namespace Settings {
+    enum class Value : DWORD {
         MSAA_TYPE,
         FULLSCREEN,
         ZOMBIE_COUNTS,

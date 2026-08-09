@@ -2,5 +2,5 @@
 
 namespace Controller
 {
-	void Install();
+    void Install();
 };

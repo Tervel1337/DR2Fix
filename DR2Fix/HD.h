@@ -1,7 +1,6 @@
 #pragma once
 
-namespace HD
-{
+namespace HD {
     void Install();
     unsigned int GetScaledResolution(unsigned int resolution);
 }

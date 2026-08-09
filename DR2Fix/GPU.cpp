@@ -66,8 +66,7 @@ static void (__fastcall *ReverseCullMode)(void *self);
 
 static void (__fastcall *RenderMeshBatch)(void *self, void *dummy, int mesh_batch_index);
 
-static void __fastcall RenderMeshBatchHijack(void *self, void *dummy, int mesh_batch_index)
-{
+static void __fastcall RenderMeshBatchHijack(void *self, void *dummy, int mesh_batch_index) {
     const bool is_actor_icon = mesh_batch_index >= 42 && mesh_batch_index <= 50;
 
     force_reverse_cull_mode = is_actor_icon;
@@ -77,8 +76,7 @@ static void __fastcall RenderMeshBatchHijack(void *self, void *dummy, int mesh_b
 
 static void (__fastcall *RenderMesh)(void *self, void *dummy, void *mesh_batch, void *mesh);
 
-static void __fastcall RenderMeshHijack(void *self, void *dummy, void *mesh_batch, void *mesh)
-{
+static void __fastcall RenderMeshHijack(void *self, void *dummy, void *mesh_batch, void *mesh) {
     const bool reverse_cull_mode = force_reverse_cull_mode ^ static_cast<bool*>(mesh)[0x36];
 
     if (reverse_cull_mode)
@@ -90,8 +88,7 @@ static void __fastcall RenderMeshHijack(void *self, void *dummy, void *mesh_batc
         ReverseCullMode(self);
 }
 
-static void FixActorIconCullMode()
-{
+static void FixActorIconCullMode() {
     // The "actor icons" (survivor display pop-ups) are horizontally flipped, meaning the
     // culling mode needs to be reversed to account for the inverted vertex winding.
     auto Pattern = Utils::FindPattern("80 7E ? 00 74 ? 83 3E FE 74 ? 53 8B CF E8");
@@ -107,18 +104,15 @@ static void FixActorIconCullMode()
     Nop(reinterpret_cast<uintptr_t>(RenderMesh) + (General::IsOTR ? 0xE5 : 0xF1), 5);
 }
 
-char* GPU::GetGraphicsInst()
-{
+char* GPU::GetGraphicsInst() {
     return *GraphicsInst;
 }
 
-unsigned int GPU::GetDisplayWidth()
-{
+unsigned int GPU::GetDisplayWidth() {
     return *(unsigned int*)(GetGraphicsInst() + 0xC);
 }
 
-unsigned int GPU::GetDisplayHeight()
-{
+unsigned int GPU::GetDisplayHeight() {
     return *(unsigned int*)(GetGraphicsInst() + 0x10);
 }
 
