@@ -5,10 +5,12 @@
 static LARGE_INTEGER* Freq;
 static float Frametime;
 static const float TargetFT = 0.0333333f;
+static float AmmoDepletionSpeed = 0.1f;
 
 static double __cdecl GetTimeForTick(_LARGE_INTEGER Tick) {
     double Result = (double)Tick.QuadPart / (double)Freq->QuadPart;
     Frametime = Result;
+    AmmoDepletionSpeed = 0.1f * Frametime / TargetFT;
     return Result;
 }
 
@@ -31,6 +33,16 @@ void Timing::Install() {
     // Fix pushable objects' turning speed being tied to frame-rate.
     Pattern = Utils::FindPattern("8B 44 24 04 8B 80 ? ? 00 00 83 F8 0F 77 07 D9 44 81 08 C2 04 00 D9 EE C2 04 00");
     InjectHook(Pattern.get_first(), &ComputePushableRotationSpeed, HookType::Jump);
+
+    // Fix ammo depletion (of items like the Hacker) being tied to frame-rate.
+    if (!General::IsOTR) {
+        Pattern = Utils::FindPattern("84 C0 74 ? F3 0F 10 86 ? ? ? ? F3 0F 5C 05 ? ? ? ? 0F 57 C9 0F 2F C8");
+        Patch(Pattern.get_first(16), &AmmoDepletionSpeed);
+    }
+    else {
+        Pattern = Utils::FindPattern("8B 07 F3 0F 10 05 ? ? ? ? 8B 90 ? ? ? ? F3 0F 11 44 24 ? FF D2");
+        Patch(Pattern.get_first(6), &AmmoDepletionSpeed);
+    }
 
     Pattern = Utils::FindPattern("F3 0F 11 90 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? F3 0F 10 82");
     static auto ExposureFix = safetyhook::create_mid(Pattern.get_first(-0x40), [](SafetyHookContext& ctx) {

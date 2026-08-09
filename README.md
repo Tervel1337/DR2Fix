@@ -24,6 +24,7 @@ This project aims to fix the PC-exclusive visual issues in Dead Rising 2 and Off
 
 ### Misc:
 - **Fixed pushable turning speed:** The speed at which items like wheelchairs turn was tied to the framerate, making it far too fast.
+- **Fixed ammo depletion speed:** Items, such as the Hacker, drained far too fast at high framerates.
 - **OTR co-op anim crash fix:** Backported a code difference from console to PC to prevent a rare animation load crash.
 
 ### Recommendations:
