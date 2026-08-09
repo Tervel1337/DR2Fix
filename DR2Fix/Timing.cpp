@@ -3,14 +3,13 @@
 #include "Utils.h"
 
 static LARGE_INTEGER* Freq;
-static float Frametime;
-static const float TargetFT = 0.0333333f;
+static float FrametimeCorrection;
 static float AmmoDepletionSpeed = 0.1f;
 
 static double __cdecl GetTimeForTick(_LARGE_INTEGER Tick) {
     double Result = (double)Tick.QuadPart / (double)Freq->QuadPart;
-    Frametime = Result;
-    AmmoDepletionSpeed = 0.1f * Frametime / TargetFT;
+    FrametimeCorrection = 30 * Result; // The game was designed around 30FPS.
+    AmmoDepletionSpeed = 0.1f * FrametimeCorrection;
     return Result;
 }
 
@@ -20,7 +19,7 @@ static double __fastcall ComputePushableRotationSpeed(float *self, void *dummy, 
     if (value > 0xF)
         return 0.0;
 
-    return self[2 + value] * Frametime / TargetFT;
+    return self[2 + value] * FrametimeCorrection;
 }
 
 void Timing::Install() {
@@ -48,7 +47,7 @@ void Timing::Install() {
     static auto ExposureFix = safetyhook::create_mid(Pattern.get_first(-0x40), [](SafetyHookContext& ctx) {
         static short DeltaROffset = General::IsOTR ? 0x1C0 : 0x1B4;
         float* DeltaRatio = (float*)(ctx.eax + DeltaROffset);
-        *DeltaRatio = *DeltaRatio * (Frametime / TargetFT);
+        *DeltaRatio = *DeltaRatio * FrametimeCorrection;
         });
 
     if (!General::IsOTR) {
@@ -56,7 +55,7 @@ void Timing::Install() {
         static int eip = (int)Pattern.get_first(0x08);
         static auto MBStrengthFix = safetyhook::create_mid(Pattern.get_first(), [](SafetyHookContext& ctx) {
             static float BaseStrength = 0.20;
-            ctx.xmm0.f32[0] = BaseStrength * (TargetFT / Frametime);
+            ctx.xmm0.f32[0] = BaseStrength / FrametimeCorrection;
             ctx.eip = eip;
             });
     }
