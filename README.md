@@ -31,6 +31,7 @@ This project aims to fix the PC-exclusive visual issues in Dead Rising 2 and Off
 - If you're playing DR2, the UI on PC has terrible compression artifacts, the [HD Frontend Textures](https://www.nexusmods.com/deadrising2/mods/22) mod fixes that.
 - PlayStation button icons can be added by installing [this mod (Dead Rising 2)](https://deadrising2mods.proboards.com/thread/3074/ps3-button-promots-dr2-pc) or [this mod (Off the Record)](https://www.nexusmods.com/deadrising2offtherecord/mods/28).
 - If you have an NVIDIA GPU and you're getting weird seams in the character models when using MSAA, it's a driver bug which you can fully avoid with [DXVK](https://github.com/doitsujin/dxvk).
+- Older versions of Proton/DXVK suffer from major graphical corruption with alpha-to-coverage; use Proton 10.0-4 or later to avoid this.
 
 ### Installation:
 - Download the latest release and extract the contents of the archive to your DR2/OTR directory, this works for both games. You do not need to rename the shader archives, the games get patched to read whichever one of the two archives is needed based on the game. This is to simplify installing the mod and to also make sure you do not accidentally get rid of the modded shaders if you verify your files.
