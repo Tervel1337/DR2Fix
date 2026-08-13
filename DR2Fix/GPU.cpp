@@ -24,11 +24,11 @@ static void GetGPUVendor() {
         pD3D->GetAdapterIdentifier(Params.AdapterOrdinal, 0, &Identifier);
         if (Identifier.VendorId == 0x1002) { // AMD
             AlphaRS = D3DRS_POINTSIZE;
-            AlphaRSValue = 0x314D3241; // ATOC
+            AlphaRSValue = MAKEFOURCC('A','2','M','1');
         }
         else if (Identifier.VendorId == 0x10DE) { // NVIDIA
             AlphaRS = D3DRS_ADAPTIVETESS_Y;
-            AlphaRSValue = 0x434F5441; // A2M1
+            AlphaRSValue = MAKEFOURCC('A','T','O','C');
         }
     }
     InitShaders();
