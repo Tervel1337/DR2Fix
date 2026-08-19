@@ -3,33 +3,17 @@
 #include "General.h"
 #include "Utils.h"
 
-float Ultrawide::AspectRatio;
-const float Ultrawide::AR16x9 = 1.78f;
-const float Ultrawide::AR32x9 = 3.55f;
-int GPU::ShadowMapRes = 1024;
+static float AspectRatio;
+static const float AR16x9 = 1.78f;
+static const float AR32x9 = 3.55f;
 
-float __fastcall Ultrawide::GetUIAspectRatio(int* thisptr, void* Dummy) {
-    GPU::ResX = *(int*)(*GPU::GraphicsInst + 0xC);
-    GPU::ResY = *(int*)(*GPU::GraphicsInst + 0x10);
-    AspectRatio = (float)GPU::ResX / (float)GPU::ResY;
+static float __fastcall GetUIAspectRatio(int* thisptr, void* Dummy) {
+    AspectRatio = (float)GPU::GetDisplayWidth() / (float)GPU::GetDisplayHeight();
     return AspectRatio > AR16x9 ? AR16x9 : AspectRatio;
 }
 
-bool __stdcall Ultrawide::FixupRes(int* Width, int* Height, tagRECT* DestRect) {
-    if ((float)*Width / *Height >= AR16x9) return false;
-
-    int NewWidth = (*Width * 9 > *Height * 16) ? (*Height * 16) / 9 : *Width;
-    int NewHeight = (*Width * 9 > *Height * 16) ? *Height : (*Width * 9) / 16;
-
-    DestRect->left = (*Width - NewWidth) / 2;
-    DestRect->top = (*Height - NewHeight) / 2;
-    DestRect->right = DestRect->left + NewWidth;
-    DestRect->bottom = DestRect->top + NewHeight;
-
-    *Width = NewWidth;
-    *Height = NewHeight;
-
-    return true;
+static bool __stdcall FixupRes(int* Width, int* Height, tagRECT* DestRect) {
+    return (float)*Width / *Height < AR16x9;
 }
 
 void Ultrawide::Install() {
@@ -44,12 +28,12 @@ void Ultrawide::Install() {
 
     Pattern = Utils::FindPattern("EB ? F3 0F 10 81 ? ? ? ? F3 0F 10 1D ? ? ? ? F3 0F 11 44 24 ? F3 0F 10 41"); 
     static auto Fix3DAR = safetyhook::create_mid(Pattern.get_first(), [](SafetyHookContext& ctx) {
-        ctx.xmm0.f32[0] = AspectRatio;
+        if (AspectRatio > AR16x9) ctx.xmm0.f32[0] = AspectRatio;
         });
 
     Pattern = Utils::FindPattern("? ? ? ? ? ? ? ? DF E0 F6 C4 ? 75 ? ? ? ? ? ? DF E0 F6 C4 ? 7B ? 80 7C 24");
     static auto Fix3DTo2DProj = safetyhook::create_mid(Pattern.get_first(), [](SafetyHookContext& ctx) {
-        if (AspectRatio > AR16x9) *(float*)ctx.esi *= AspectRatio * 0.5625f;
+        if (AspectRatio > AR16x9) *(float*)ctx.esi *= AspectRatio * (9.0f / 16.0f);
         });
 
     Pattern = Utils::FindPattern("F3 0F 10 4C 24 ? F3 0F 10 54 24 ? F3 0F 10 2D");
@@ -57,15 +41,4 @@ void Ultrawide::Install() {
         if (AspectRatio > AR16x9) ctx.xmm0.f32[0] = (9.0f / AR16x9) * (AspectRatio - AR16x9);
         // this is 100% not correct but it works for increasing the coverage in a way that looks fine at least
         });
-
-    Pattern = Utils::FindPattern("83 BE ? ? ? ? ? C7 86 ? ? ? ? ? ? ? ? C6 86");
-    static auto ShadowRes = safetyhook::create_mid(Pattern.get_first(0x11), [](SafetyHookContext& ctx) {
-        const short WidthOffset = General::IsOTR ? 0xD0 : 0xBC;
-        if (AspectRatio > AR16x9) {
-            GPU::ShadowMapRes = AspectRatio < AR32x9 ? 2048 : 4096;
-            *(int*)(ctx.esi + WidthOffset) = AspectRatio < AR32x9 ? 2048 : 4096;
-        }
-        else GPU::ShadowMapRes = *(int*)(ctx.esi + WidthOffset);
-       });
-
 }

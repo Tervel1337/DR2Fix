@@ -1,10 +1,14 @@
 #include "Shader.h"
 #include "General.h"
+#include "Utils.h"
 
-void* Shader::InitShaders;
-short Shader::ShaderHashOffset = 0x414;
-const char* Shader::BasePath = "data/shaders/deadrising-ps-base.big";
-const char* Shader::OTRPath = "data/shaders/deadrising-ps-otr.big";
+static short ShaderHashOffset = 0x414;
+static const char* BasePath = "data/shaders/deadrising-ps-base.big";
+static const char* OTRPath = "data/shaders/deadrising-ps-otr.big";
+
+short Shader::GetShaderHashOffset() {
+    return ShaderHashOffset;
+}
 
 bool Shader::IsSkinnedShader(unsigned int Hash) {
     // these are the name hashes so if you mod those shaders they won't change and also I don't see the point in computing them
@@ -21,7 +25,7 @@ bool Shader::IsSkinnedShader(unsigned int Hash) {
 }
 
 void Shader::Install() {
-    if (General::IsOTR) Shader::ShaderHashOffset += 0x104;
+    if (General::IsOTR) ShaderHashOffset += 0x104;
 
     auto Pattern = Utils::FindPattern("8B 0D ? ? ? ? 68 ? ? ? ? 68 ? ? ? ? 68 ? ? ? ? 68");
     Patch<const char*>(Pattern.get_first(0x11), General::IsOTR ? OTRPath :BasePath);

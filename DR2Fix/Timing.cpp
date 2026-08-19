@@ -1,14 +1,25 @@
 #include "Timing.h"
 #include "General.h"
+#include "Utils.h"
 
-LARGE_INTEGER* Timing::Freq;
-float Timing::Frametime;
-const float Timing::TargetFT = 0.0333333f;
+static LARGE_INTEGER* Freq;
+static float FrametimeCorrection;
+static float AmmoDepletionSpeed = 0.1f;
 
-double __cdecl Timing::GetTimeForTick(_LARGE_INTEGER Tick) {
+static double __cdecl GetTimeForTick(_LARGE_INTEGER Tick) {
     double Result = (double)Tick.QuadPart / (double)Freq->QuadPart;
-    Frametime = Result;
+    FrametimeCorrection = 30 * Result; // The game was designed around 30FPS.
+    AmmoDepletionSpeed = 0.1f * FrametimeCorrection;
     return Result;
+}
+
+static double __fastcall ComputePushableRotationSpeed(float *self, void *dummy, unsigned int *thing) {
+    const auto value = thing[General::IsOTR ? 0x56 : 0x47];
+
+    if (value > 0xF)
+        return 0.0;
+
+    return self[2 + value] * FrametimeCorrection;
 }
 
 void Timing::Install() {
@@ -18,11 +29,25 @@ void Timing::Install() {
     Pattern = Utils::FindPattern("E8 ? ? ? ? ? ? ? ? 8B 0D ? ? ? ? 83 C4 ? 57");
     InjectHook(Pattern.get_first(), &GetTimeForTick, HookType::Call);
 
+    // Fix pushable objects' turning speed being tied to frame-rate.
+    Pattern = Utils::FindPattern("8B 44 24 04 8B 80 ? ? 00 00 83 F8 0F 77 07 D9 44 81 08 C2 04 00 D9 EE C2 04 00");
+    InjectHook(Pattern.get_first(), &ComputePushableRotationSpeed, HookType::Jump);
+
+    // Fix ammo depletion (of items like the Hacker) being tied to frame-rate.
+    if (!General::IsOTR) {
+        Pattern = Utils::FindPattern("84 C0 74 ? F3 0F 10 86 ? ? ? ? F3 0F 5C 05 ? ? ? ? 0F 57 C9 0F 2F C8");
+        Patch(Pattern.get_first(16), &AmmoDepletionSpeed);
+    }
+    else {
+        Pattern = Utils::FindPattern("8B 07 F3 0F 10 05 ? ? ? ? 8B 90 ? ? ? ? F3 0F 11 44 24 ? FF D2");
+        Patch(Pattern.get_first(6), &AmmoDepletionSpeed);
+    }
+
     Pattern = Utils::FindPattern("F3 0F 11 90 ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? ? F3 0F 10 82");
     static auto ExposureFix = safetyhook::create_mid(Pattern.get_first(-0x40), [](SafetyHookContext& ctx) {
         static short DeltaROffset = General::IsOTR ? 0x1C0 : 0x1B4;
         float* DeltaRatio = (float*)(ctx.eax + DeltaROffset);
-        *DeltaRatio = *DeltaRatio * (Frametime / TargetFT);
+        *DeltaRatio = *DeltaRatio * FrametimeCorrection;
         });
 
     if (!General::IsOTR) {
@@ -30,7 +55,7 @@ void Timing::Install() {
         static int eip = (int)Pattern.get_first(0x08);
         static auto MBStrengthFix = safetyhook::create_mid(Pattern.get_first(), [](SafetyHookContext& ctx) {
             static float BaseStrength = 0.20;
-            ctx.xmm0.f32[0] = BaseStrength * (TargetFT / Frametime);
+            ctx.xmm0.f32[0] = BaseStrength / FrametimeCorrection;
             ctx.eip = eip;
             });
     }

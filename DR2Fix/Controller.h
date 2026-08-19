@@ -1,5 +1,6 @@
 #pragma once
 
-namespace Timing {
+namespace Controller
+{
     void Install();
 };

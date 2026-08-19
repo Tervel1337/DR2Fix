@@ -74,11 +74,11 @@ std::shared_ptr<Allocator> Allocator::create() {
     return std::shared_ptr<Allocator>{new Allocator{}};
 }
 
-std::expected<Allocation, Allocator::Error> Allocator::allocate(size_t size) {
+nonstd::expected<Allocation, Allocator::Error> Allocator::allocate(size_t size) {
     return allocate_near({}, size, std::numeric_limits<size_t>::max());
 }
 
-std::expected<Allocation, Allocator::Error> Allocator::allocate_near(
+nonstd::expected<Allocation, Allocator::Error> Allocator::allocate_near(
     const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance) {
     std::scoped_lock lock{m_mutex};
     return internal_allocate_near(desired_addresses, size, max_distance);
@@ -89,7 +89,7 @@ void Allocator::free(uint8_t* address, size_t size) {
     return internal_free(address, size);
 }
 
-std::expected<Allocation, Allocator::Error> Allocator::internal_allocate_near(
+nonstd::expected<Allocation, Allocator::Error> Allocator::internal_allocate_near(
     const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance) {
     // Align to 2 bytes to pass MFP virtual method check
     // See https://itanium-cxx-abi.github.io/cxx-abi/abi.html#member-function-pointers
@@ -126,7 +126,7 @@ std::expected<Allocation, Allocator::Error> Allocator::internal_allocate_near(
     auto allocation_address = allocate_nearby_memory(desired_addresses, allocation_size, max_distance);
 
     if (!allocation_address) {
-        return std::unexpected{allocation_address.error()};
+        return nonstd::unexpected{allocation_address.error()};
     }
 
     auto& allocation = m_memory.emplace_back(new Memory);
@@ -190,14 +190,14 @@ void Allocator::combine_adjacent_freenodes(Memory& memory) {
     }
 }
 
-std::expected<uint8_t*, Allocator::Error> Allocator::allocate_nearby_memory(
+nonstd::expected<uint8_t*, Allocator::Error> Allocator::allocate_nearby_memory(
     const std::vector<uint8_t*>& desired_addresses, size_t size, size_t max_distance) {
     if (desired_addresses.empty()) {
         if (auto result = vm_allocate(nullptr, size, VM_ACCESS_RWX)) {
             return result.value();
         }
 
-        return std::unexpected{Error::BAD_VIRTUAL_ALLOC};
+        return nonstd::unexpected{Error::BAD_VIRTUAL_ALLOC};
     }
 
     auto attempt_allocation = [&](uint8_t* p) -> uint8_t* {
@@ -269,7 +269,7 @@ std::expected<uint8_t*, Allocator::Error> Allocator::allocate_nearby_memory(
         }
     }
 
-    return std::unexpected{Error::NO_MEMORY_IN_RANGE};
+    return nonstd::unexpected{Error::NO_MEMORY_IN_RANGE};
 }
 
 bool Allocator::in_range(uint8_t* address, const std::vector<uint8_t*>& desired_addresses, size_t max_distance) {
@@ -374,10 +374,10 @@ static auto make_jmp_ff(uint8_t* src, uint8_t* dst, uint8_t* data) {
     return jmp;
 }
 
-[[nodiscard]] static std::expected<void, InlineHook::Error> emit_jmp_ff(
+[[nodiscard]] static nonstd::expected<void, InlineHook::Error> emit_jmp_ff(
     uint8_t* src, uint8_t* dst, uint8_t* data, size_t size = sizeof(JmpFF)) {
     if (size < sizeof(JmpFF)) {
-        return std::unexpected{InlineHook::Error::not_enough_space(dst)};
+        return nonstd::unexpected{InlineHook::Error::not_enough_space(dst)};
     }
 
     if (size > sizeof(JmpFF)) {
@@ -398,10 +398,10 @@ constexpr auto make_jmp_e9(uint8_t* src, uint8_t* dst) {
     return jmp;
 }
 
-[[nodiscard]] static std::expected<void, InlineHook::Error> emit_jmp_e9(
+[[nodiscard]] static nonstd::expected<void, InlineHook::Error> emit_jmp_e9(
     uint8_t* src, uint8_t* dst, size_t size = sizeof(JmpE9)) {
     if (size < sizeof(JmpE9)) {
-        return std::unexpected{InlineHook::Error::not_enough_space(dst)};
+        return nonstd::unexpected{InlineHook::Error::not_enough_space(dst)};
     }
 
     if (size > sizeof(JmpE9)) {
@@ -430,23 +430,23 @@ static bool decode(ZydisDecodedInstruction* ix, uint8_t* ip) {
     return ZYAN_SUCCESS(ZydisDecoderDecodeInstruction(&decoder, nullptr, ip, 15, ix));
 }
 
-std::expected<InlineHook, InlineHook::Error> InlineHook::create(void* target, void* destination, Flags flags) {
+nonstd::expected<InlineHook, InlineHook::Error> InlineHook::create(void* target, void* destination, Flags flags) {
     return create(Allocator::global(), target, destination, flags);
 }
 
-std::expected<InlineHook, InlineHook::Error> InlineHook::create(
+nonstd::expected<InlineHook, InlineHook::Error> InlineHook::create(
     const std::shared_ptr<Allocator>& allocator, void* target, void* destination, Flags flags) {
     InlineHook hook{};
 
     if (const auto setup_result =
             hook.setup(allocator, reinterpret_cast<uint8_t*>(target), reinterpret_cast<uint8_t*>(destination));
         !setup_result) {
-        return std::unexpected{setup_result.error()};
+        return nonstd::unexpected{setup_result.error()};
     }
 
     if (!(flags & StartDisabled)) {
         if (auto enable_result = hook.enable(); !enable_result) {
-            return std::unexpected{enable_result.error()};
+            return nonstd::unexpected{enable_result.error()};
         }
     }
 
@@ -489,7 +489,7 @@ void InlineHook::reset() {
     *this = {};
 }
 
-std::expected<void, InlineHook::Error> InlineHook::setup(
+nonstd::expected<void, InlineHook::Error> InlineHook::setup(
     const std::shared_ptr<Allocator>& allocator, uint8_t* target, uint8_t* destination) {
     m_target = target;
     m_destination = destination;
@@ -507,7 +507,7 @@ std::expected<void, InlineHook::Error> InlineHook::setup(
     return {};
 }
 
-std::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr<Allocator>& allocator) {
+nonstd::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr<Allocator>& allocator) {
     m_original_bytes.clear();
     m_trampoline_size = sizeof(TrampolineEpilogueE9);
 
@@ -516,7 +516,7 @@ std::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr
 
     for (auto ip = m_target; ip < m_target + sizeof(JmpE9); ip += ix.length) {
         if (!decode(&ix, ip)) {
-            return std::unexpected{Error::failed_to_decode_instruction(ip)};
+            return nonstd::unexpected{Error::failed_to_decode_instruction(ip)};
         }
 
         m_trampoline_size += ix.length;
@@ -540,7 +540,7 @@ std::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr
                 desired_addresses.emplace_back(target_address);
                 m_trampoline_size += 3; // near unconditional branches are 3 bytes larger.
             } else {
-                return std::unexpected{Error::unsupported_instruction_in_trampoline(ip)};
+                return nonstd::unexpected{Error::unsupported_instruction_in_trampoline(ip)};
             }
         }
     }
@@ -548,7 +548,7 @@ std::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr
     auto trampoline_allocation = allocator->allocate_near(desired_addresses, m_trampoline_size);
 
     if (!trampoline_allocation) {
-        return std::unexpected{Error::bad_allocation(trampoline_allocation.error())};
+        return nonstd::unexpected{Error::bad_allocation(trampoline_allocation.error())};
     }
 
     m_trampoline = std::move(*trampoline_allocation);
@@ -556,7 +556,7 @@ std::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr
     for (auto ip = m_target, tramp_ip = m_trampoline.data(); ip < m_target + m_original_bytes.size(); ip += ix.length) {
         if (!decode(&ix, ip)) {
             m_trampoline.free();
-            return std::unexpected{Error::failed_to_decode_instruction(ip)};
+            return nonstd::unexpected{Error::failed_to_decode_instruction(ip)};
         }
 
         const auto is_relative = (ix.attributes & ZYDIS_ATTRIB_IS_RELATIVE) != 0;
@@ -612,7 +612,7 @@ std::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr
     auto dst = m_target + m_original_bytes.size();
 
     if (auto result = emit_jmp_e9(src, dst); !result) {
-        return std::unexpected{result.error()};
+        return nonstd::unexpected{result.error()};
     }
 
     // jmp from trampoline to destination.
@@ -623,11 +623,11 @@ std::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr
     auto data = reinterpret_cast<uint8_t*>(&trampoline_epilogue->destination_address);
 
     if (auto result = emit_jmp_ff(src, dst, data); !result) {
-        return std::unexpected{result.error()};
+        return nonstd::unexpected{result.error()};
     }
 #elif SAFETYHOOK_ARCH_X86_32
     if (auto result = emit_jmp_e9(src, dst); !result) {
-        return std::unexpected{result.error()};
+        return nonstd::unexpected{result.error()};
     }
 #endif
 
@@ -637,21 +637,21 @@ std::expected<void, InlineHook::Error> InlineHook::e9_hook(const std::shared_ptr
 }
 
 #if SAFETYHOOK_ARCH_X86_64
-std::expected<void, InlineHook::Error> InlineHook::ff_hook(const std::shared_ptr<Allocator>& allocator) {
+nonstd::expected<void, InlineHook::Error> InlineHook::ff_hook(const std::shared_ptr<Allocator>& allocator) {
     m_original_bytes.clear();
     m_trampoline_size = sizeof(TrampolineEpilogueFF);
     ZydisDecodedInstruction ix{};
 
     for (auto ip = m_target; ip < m_target + sizeof(JmpFF) + sizeof(uintptr_t); ip += ix.length) {
         if (!decode(&ix, ip)) {
-            return std::unexpected{Error::failed_to_decode_instruction(ip)};
+            return nonstd::unexpected{Error::failed_to_decode_instruction(ip)};
         }
 
         // We can't support any instruction that is IP relative here because
         // ff_hook should only be called if e9_hook failed indicating that
         // we're likely outside the +- 2GB range.
         if (ix.attributes & ZYDIS_ATTRIB_IS_RELATIVE) {
-            return std::unexpected{Error::ip_relative_instruction_out_of_range(ip)};
+            return nonstd::unexpected{Error::ip_relative_instruction_out_of_range(ip)};
         }
 
         m_original_bytes.insert(m_original_bytes.end(), ip, ip + ix.length);
@@ -661,7 +661,7 @@ std::expected<void, InlineHook::Error> InlineHook::ff_hook(const std::shared_ptr
     auto trampoline_allocation = allocator->allocate(m_trampoline_size);
 
     if (!trampoline_allocation) {
-        return std::unexpected{Error::bad_allocation(trampoline_allocation.error())};
+        return nonstd::unexpected{Error::bad_allocation(trampoline_allocation.error())};
     }
 
     m_trampoline = std::move(*trampoline_allocation);
@@ -677,7 +677,7 @@ std::expected<void, InlineHook::Error> InlineHook::ff_hook(const std::shared_ptr
     auto data = reinterpret_cast<uint8_t*>(&trampoline_epilogue->original_address);
 
     if (auto result = emit_jmp_ff(src, dst, data); !result) {
-        return std::unexpected{result.error()};
+        return nonstd::unexpected{result.error()};
     }
 
     m_type = Type::FF;
@@ -686,7 +686,7 @@ std::expected<void, InlineHook::Error> InlineHook::ff_hook(const std::shared_ptr
 }
 #endif
 
-std::expected<void, InlineHook::Error> InlineHook::enable() {
+nonstd::expected<void, InlineHook::Error> InlineHook::enable() {
     std::scoped_lock lock{m_mutex};
 
     if (m_enabled) {
@@ -719,7 +719,7 @@ std::expected<void, InlineHook::Error> InlineHook::enable() {
     });
 
     if (error) {
-        return std::unexpected{*error};
+        return nonstd::unexpected{*error};
     }
 
     m_enabled = true;
@@ -727,7 +727,7 @@ std::expected<void, InlineHook::Error> InlineHook::enable() {
     return {};
 }
 
-std::expected<void, InlineHook::Error> InlineHook::disable() {
+nonstd::expected<void, InlineHook::Error> InlineHook::disable() {
     std::scoped_lock lock{m_mutex};
 
     if (!m_enabled) {
@@ -825,22 +825,22 @@ constexpr std::array<uint8_t, 171> asm_data = {0xFF, 0x35, 0xA7, 0x00, 0x00, 0x0
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 #endif
 
-std::expected<MidHook, MidHook::Error> MidHook::create(void* target, MidHookFn destination, Flags flags) {
+nonstd::expected<MidHook, MidHook::Error> MidHook::create(void* target, MidHookFn destination, Flags flags) {
     return create(Allocator::global(), target, destination, flags);
 }
 
-std::expected<MidHook, MidHook::Error> MidHook::create(
+nonstd::expected<MidHook, MidHook::Error> MidHook::create(
     const std::shared_ptr<Allocator>& allocator, void* target, MidHookFn destination, Flags flags) {
     MidHook hook{};
 
     if (const auto setup_result = hook.setup(allocator, reinterpret_cast<uint8_t*>(target), destination);
         !setup_result) {
-        return std::unexpected{setup_result.error()};
+        return nonstd::unexpected{setup_result.error()};
     }
 
     if (!(flags & StartDisabled)) {
         if (auto enable_result = hook.enable(); !enable_result) {
-            return std::unexpected{enable_result.error()};
+            return nonstd::unexpected{enable_result.error()};
         }
     }
 
@@ -869,7 +869,7 @@ void MidHook::reset() {
     *this = {};
 }
 
-std::expected<void, MidHook::Error> MidHook::setup(
+nonstd::expected<void, MidHook::Error> MidHook::setup(
     const std::shared_ptr<Allocator>& allocator, uint8_t* target, MidHookFn destination_fn) {
     m_target = target;
     m_destination = destination_fn;
@@ -877,7 +877,7 @@ std::expected<void, MidHook::Error> MidHook::setup(
     auto stub_allocation = allocator->allocate(asm_data.size());
 
     if (!stub_allocation) {
-        return std::unexpected{Error::bad_allocation(stub_allocation.error())};
+        return nonstd::unexpected{Error::bad_allocation(stub_allocation.error())};
     }
 
     m_stub = std::move(*stub_allocation);
@@ -898,7 +898,7 @@ std::expected<void, MidHook::Error> MidHook::setup(
 
     if (!hook_result) {
         m_stub.free();
-        return std::unexpected{Error::bad_inline_hook(hook_result.error())};
+        return nonstd::unexpected{Error::bad_inline_hook(hook_result.error())};
     }
 
     m_hook = std::move(*hook_result);
@@ -912,17 +912,17 @@ std::expected<void, MidHook::Error> MidHook::setup(
     return {};
 }
 
-std::expected<void, MidHook::Error> MidHook::enable() {
+nonstd::expected<void, MidHook::Error> MidHook::enable() {
     if (auto enable_result = m_hook.enable(); !enable_result) {
-        return std::unexpected{Error::bad_inline_hook(enable_result.error())};
+        return nonstd::unexpected{Error::bad_inline_hook(enable_result.error())};
     }
 
     return {};
 }
 
-std::expected<void, MidHook::Error> MidHook::disable() {
+nonstd::expected<void, MidHook::Error> MidHook::disable() {
     if (auto disable_result = m_hook.disable(); !disable_result) {
-        return std::unexpected{Error::bad_inline_hook(disable_result.error())};
+        return nonstd::unexpected{Error::bad_inline_hook(disable_result.error())};
     }
 
     return {};
@@ -944,7 +944,7 @@ std::expected<void, MidHook::Error> MidHook::disable() {
 
 
 namespace safetyhook {
-std::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAccess access) {
+nonstd::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAccess access) {
     int prot = 0;
     int flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
@@ -957,13 +957,13 @@ std::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAc
     } else if (access == VM_ACCESS_RWX) {
         prot = PROT_READ | PROT_WRITE | PROT_EXEC;
     } else {
-        return std::unexpected{OsError::FAILED_TO_ALLOCATE};
+        return nonstd::unexpected{OsError::FAILED_TO_ALLOCATE};
     }
 
     auto* result = mmap(address, size, prot, flags, -1, 0);
 
     if (result == MAP_FAILED) {
-        return std::unexpected{OsError::FAILED_TO_ALLOCATE};
+        return nonstd::unexpected{OsError::FAILED_TO_ALLOCATE};
     }
 
     return static_cast<uint8_t*>(result);
@@ -973,7 +973,7 @@ void vm_free(uint8_t* address) {
     munmap(address, 0);
 }
 
-std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAccess access) {
+nonstd::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAccess access) {
     int prot = 0;
 
     if (access == VM_ACCESS_R) {
@@ -985,17 +985,17 @@ std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAcc
     } else if (access == VM_ACCESS_RWX) {
         prot = PROT_READ | PROT_WRITE | PROT_EXEC;
     } else {
-        return std::unexpected{OsError::FAILED_TO_PROTECT};
+        return nonstd::unexpected{OsError::FAILED_TO_PROTECT};
     }
 
     return vm_protect(address, size, prot);
 }
 
-std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint32_t protect) {
+nonstd::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint32_t protect) {
     auto mbi = vm_query(address);
 
     if (!mbi.has_value()) {
-        return std::unexpected{OsError::FAILED_TO_PROTECT};
+        return nonstd::unexpected{OsError::FAILED_TO_PROTECT};
     }
 
     uint32_t old_protect = 0;
@@ -1015,17 +1015,17 @@ std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint3
     auto* addr = align_down(address, static_cast<size_t>(sysconf(_SC_PAGESIZE)));
 
     if (mprotect(addr, size, static_cast<int>(protect)) == -1) {
-        return std::unexpected{OsError::FAILED_TO_PROTECT};
+        return nonstd::unexpected{OsError::FAILED_TO_PROTECT};
     }
 
     return old_protect;
 }
 
-std::expected<VmBasicInfo, OsError> vm_query(uint8_t* address) {
+nonstd::expected<VmBasicInfo, OsError> vm_query(uint8_t* address) {
     auto* maps = fopen("/proc/self/maps", "r");
 
     if (maps == nullptr) {
-        return std::unexpected{OsError::FAILED_TO_QUERY};
+        return nonstd::unexpected{OsError::FAILED_TO_QUERY};
     }
 
     char line[512];
@@ -1079,7 +1079,7 @@ std::expected<VmBasicInfo, OsError> vm_query(uint8_t* address) {
     fclose(maps);
 
     if (!info.has_value()) {
-        return std::unexpected{OsError::FAILED_TO_QUERY};
+        return nonstd::unexpected{OsError::FAILED_TO_QUERY};
     }
 
     return info.value();
@@ -1147,7 +1147,7 @@ void fix_ip([[maybe_unused]] ThreadContext ctx, [[maybe_unused]] uint8_t* old_ip
 
 
 namespace safetyhook {
-std::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAccess access) {
+nonstd::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAccess access) {
     DWORD protect = 0;
 
     if (access == VM_ACCESS_R) {
@@ -1159,13 +1159,13 @@ std::expected<uint8_t*, OsError> vm_allocate(uint8_t* address, size_t size, VmAc
     } else if (access == VM_ACCESS_RWX) {
         protect = PAGE_EXECUTE_READWRITE;
     } else {
-        return std::unexpected{OsError::FAILED_TO_ALLOCATE};
+        return nonstd::unexpected{OsError::FAILED_TO_ALLOCATE};
     }
 
     auto* result = VirtualAlloc(address, size, MEM_COMMIT | MEM_RESERVE, protect);
 
     if (result == nullptr) {
-        return std::unexpected{OsError::FAILED_TO_ALLOCATE};
+        return nonstd::unexpected{OsError::FAILED_TO_ALLOCATE};
     }
 
     return static_cast<uint8_t*>(result);
@@ -1175,7 +1175,7 @@ void vm_free(uint8_t* address) {
     VirtualFree(address, 0, MEM_RELEASE);
 }
 
-std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAccess access) {
+nonstd::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAccess access) {
     DWORD protect = 0;
 
     if (access == VM_ACCESS_R) {
@@ -1187,28 +1187,28 @@ std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, VmAcc
     } else if (access == VM_ACCESS_RWX) {
         protect = PAGE_EXECUTE_READWRITE;
     } else {
-        return std::unexpected{OsError::FAILED_TO_PROTECT};
+        return nonstd::unexpected{OsError::FAILED_TO_PROTECT};
     }
 
     return vm_protect(address, size, protect);
 }
 
-std::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint32_t protect) {
+nonstd::expected<uint32_t, OsError> vm_protect(uint8_t* address, size_t size, uint32_t protect) {
     DWORD old_protect = 0;
 
     if (VirtualProtect(address, size, protect, &old_protect) == FALSE) {
-        return std::unexpected{OsError::FAILED_TO_PROTECT};
+        return nonstd::unexpected{OsError::FAILED_TO_PROTECT};
     }
 
     return old_protect;
 }
 
-std::expected<VmBasicInfo, OsError> vm_query(uint8_t* address) {
+nonstd::expected<VmBasicInfo, OsError> vm_query(uint8_t* address) {
     MEMORY_BASIC_INFORMATION mbi{};
     auto result = VirtualQuery(address, &mbi, sizeof(mbi));
 
     if (result == 0) {
-        return std::unexpected{OsError::FAILED_TO_QUERY};
+        return nonstd::unexpected{OsError::FAILED_TO_QUERY};
     }
 
     VmAccess access{};
@@ -1556,7 +1556,7 @@ void VmHook::destroy() {
     }
 }
 
-std::expected<VmtHook, VmtHook::Error> VmtHook::create(void* object) {
+nonstd::expected<VmtHook, VmtHook::Error> VmtHook::create(void* object) {
     VmtHook hook{};
 
     const auto original_vmt = *reinterpret_cast<uint8_t***>(object);
@@ -1573,7 +1573,7 @@ std::expected<VmtHook, VmtHook::Error> VmtHook::create(void* object) {
     auto allocation = Allocator::global()->allocate(num_vmt_entries * sizeof(uint8_t*));
 
     if (!allocation) {
-        return std::unexpected{Error::bad_allocation(allocation.error())};
+        return nonstd::unexpected{Error::bad_allocation(allocation.error())};
     }
 
     hook.m_new_vmt_allocation = std::make_shared<Allocation>(std::move(*allocation));

@@ -1,6 +1,7 @@
 #include "General.h"
 #include "GPU.h"
 #include "Shader.h"
+#include "Utils.h"
 
 bool General::IsOTR;
 
@@ -13,6 +14,9 @@ void General::Install() {
     Patch<char>(Pattern.get_first(0x06), 64);
     Patch<char>(Pattern.get_first(0x28), 64);
     Patch<char>(Pattern.get_first(0x2D), 64);
+
+    Pattern = Utils::FindPattern("83 C4 08 8B F0 80 3D ? ? ? ? 00 74 18 6A 07"); // skip startup logos
+    Nop(Pattern.get_first(12), 2);
 
     if (!IsOTR) {
         auto Pattern = Utils::FindPattern("6A ? B9 ? ? ? ? E8 ? ? ? ? F3 0F 10 05"); // fix for the blur setting not applying on boot in DR2
